@@ -31,7 +31,7 @@ const BoxContainer = styled.div`
     border-style: solid;
     border-color: #DEE2E6;
     border-width: 1px;
-    cursor: "pointer";
+    cursor: pointer;
     transition: ease background-color 250ms;
     &:hover {
     transform: "scale(1)";
@@ -151,6 +151,10 @@ const Slot = ({ setDatePickerOpen }) => {
     const { user } = useContext(AuthContext)
     const [messageApi, contextHolder] = message.useMessage();
     const [showButton, setShowButton] = useState(true)
+    const [bookFor, setBookFor] = useState(''); // enums - teacher, 
+    const [allTeachers, setAllTeachers] = useState([]); // all teachers array
+    const [isLoading, setIsLoading] = useState(false); // loading spinner
+    const [selectedTeacher, setSelectedTeacher] = useState(null); // selected teacher
     const header = {
         'Content-Type': 'application/json',
         'token': `Bearer ${user?.accestoken}`
@@ -177,9 +181,35 @@ const Slot = ({ setDatePickerOpen }) => {
         setIsModalOpenTwo(false)
     }
     const handleCancelType = () => {
+        setSelectedTeacher(null)
         setDatePickerOpen(true)
         setIsModalOpenType(false)
     }
+
+    // handle book for 
+    const handleBookFor = async (value) => {
+        setBookFor(value);
+        if (value === 'teacher' && allTeachers?.length === 0) {
+            setIsLoading(true);
+            try {
+                const res = await publicRequest.get('/user/booking');
+                console.log(res.data);
+                setAllTeachers(res.data?.teachers);
+            } catch (e) {
+                console.log(e);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    }
+
+    // handle select teacher 
+    const handleSelectedTeacher = (e) => {
+        let value = e.target.value;
+        const teacher = allTeachers?.find(t => t?.email === value);
+        setSelectedTeacher(teacher);
+    }
+
     const handleCancelYetAnother = () => {
         setDatePickerOpen(true)
         setIsModalOpenYetAnother(false)
@@ -469,6 +499,7 @@ const Slot = ({ setDatePickerOpen }) => {
         }
     }, [activeId, bulkOn])
 
+
     return (<OuterContainer>
         {contextHolder}
         <Container>
@@ -501,19 +532,34 @@ const Slot = ({ setDatePickerOpen }) => {
                 <Input placeholder="eg: Higher Authority" onChange={(e) => setProgram(e.target.value)} />
             </Form>
         </Modal>
-        <Modal title='Select Type' open={isModalOpenType} onOk={handleOkType} onCancel={handleCancelType} okButtonProps={{ disabled: program === "" ? true : false }}>
+        <Modal title='Select Type' open={isModalOpenType} onOk={handleOkType} onCancel={handleCancelType} okButtonProps={{ 
+            disabled: selectedTeacher === null ? true : false }}>
             <div className='d-flex mt-3'>
-                <BoxContainer >
-                    <p>
+                <BoxContainer className={`${bookFor === "teacher" ? "bg-primary" : ""}`} onClick={() => handleBookFor('teacher')}>
+                    <p className={`${bookFor === "teacher" ? "text-white" : ""}`}>
                         Book For Teacher
                     </p>
                 </BoxContainer>
-                <BoxContainer>
-                    <p>
+                <BoxContainer onClick={() => handleBookFor('admin')} className={`${bookFor === "admin" ? "bg-primary" : ""}`}>
+                    <p className={`${bookFor === "admin" ? "text-white" : ""}`}>
                         Book As Admin
                     </p>
                 </BoxContainer>
             </div>
+            {bookFor === "teacher" && <div className='w-100 my-2 px-2'>
+                {isLoading ? <Spin />
+                    :
+                    <select name="teachers" value={selectedTeacher?.email || ""} id="teachers" className='form-control w-100' onChange={(e) => handleSelectedTeacher(e)}>
+                        <option value="" selected disabled>Select Teacher</option>
+                        {allTeachers?.map(teacher => {
+                            let formatted = `${teacher?.name} ${teacher?.lastname} (${teacher.email})`
+                            return (
+                                <option value={teacher?.email}>{formatted}</option>
+                            )
+                        })}
+                    </select>
+                }
+            </div>}
         </Modal>
         <Modal title={`You are booking slot for teacher`} open={isModalOpenYetAnother} onOk={handleOkYetAnother} onCancel={handleCancelYetAnother} okButtonProps={{ disabled: program === '' ? true : false }}>
                 <Title>Select the program</Title>
