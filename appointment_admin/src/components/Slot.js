@@ -3,7 +3,7 @@ import styled, { createGlobalStyle } from 'styled-components'
 import Column from './Column'
 import { data } from '../data'
 import { useReducer, useState } from 'react'
-import { userRequest } from '../requestMethods'
+import { userRequest, publicRequest } from '../requestMethods'
 import { useContext } from 'react'
 import { SlotStatusContext } from '../context/SlotStatusContext'
 import { Modal, Result, Spin, message, Radio, Alert } from 'antd'
@@ -13,6 +13,8 @@ import { AuthContext } from '../context/AuthContext'
 import { ConsoleSqlOutlined, LoadingOutlined } from '@ant-design/icons'
 import { useEffect } from 'react'
 import { getStartTimeFromTimingNoForDisabling } from '../utils/dateUtil'
+const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8]
+const PROGRAMNAMES = ["BAJMC", "BBA", "BCA", "M.Com", "MAJMC", "MBA", "MCA", "MA Economics", "MA English", "MSC Mathematics"]
 
 const BoxContainer = styled.div`
     max-width: 110px;
@@ -116,16 +118,43 @@ const Input = styled.input`
     cursor: ${props => props.disabled == true ? 'not-allowed' : "pointer"};
     padding: 6px;
 `
+const Select = styled.select`
+    margin: 10px;
+    padding: 10px;
+    border-radius: 4px;
+`
+const Option = styled.option`
+    padding: 10px;
+    margin: 10px;
+
+`
+const getStudioTypeFromStudioNo = (studioNo) => {
+    if (studioNo == '4') {
+      return 'numerical'
+    } else {
+      return 'theory'
+    }
+  }
 const Slot = ({ setDatePickerOpen }) => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isModalOpenTwo, setIsModalOpenTwo] = useState(false)
     const [isModalOpenType, setIsModalOpenType] = useState(false)
+    const [isModalOpenYetAnother, setIsModalOpenYetAnother] = useState(false)
+    const [programYetAnother, setProgramYetAnother] = useState("")
+    const [programs, setPrograms] = useState([])
+    const [semester, setSemester] = useState(SEMESTERS[0])
+    const [programName, setProgramName] = useState(PROGRAMNAMES[0])
+    const [programObjectSelected,setProgramObjectSelected]  = useState({})
     const { activeId, dateString, unCheckSlotActive, dispatch, loading, bookedSlots, handleBulkOnActive, setBulkOn, bulkIdsActive, bulkOn } = useContext(SlotStatusContext)
     const [program, setProgram] = useState("")
     const [state, dispatchA] = useReducer(bookingReducer, INITIAL_STATE_SLOT_REDUCER)
     const { user } = useContext(AuthContext)
     const [messageApi, contextHolder] = message.useMessage();
     const [showButton, setShowButton] = useState(true)
+    const header = {
+        'Content-Type': 'application/json',
+        'token': `Bearer ${user?.accestoken}`
+    }
     const handleBook = () => {
         if (fullSlot) {
             setDatePickerOpen(false)
@@ -150,6 +179,10 @@ const Slot = ({ setDatePickerOpen }) => {
     const handleCancelType = () => {
         setDatePickerOpen(true)
         setIsModalOpenType(false)
+    }
+    const handleCancelYetAnother = () => {
+        setDatePickerOpen(true)
+        setIsModalOpenYetAnother(false)
     }
     const handleOk = async (e) => {
         e.preventDefault()
@@ -266,6 +299,38 @@ const Slot = ({ setDatePickerOpen }) => {
             unCheckSlotActive()
             slotStatuses(dispatch, dateString)
             success(res.data)
+        } catch (err) {
+            dispatchA({ type: ACTION_TYPE.BOOKING_FAIL })
+            error()
+        }
+    }
+    const handleOkYetAnother = async (e) => {
+        e.preventDefault()
+        setDatePickerOpen(true)
+        setIsModalOpen(false)
+        dispatchA({ type: ACTION_TYPE.BOOKING_START })
+        try {
+            await publicRequest.post("/booking", {
+                type: getStudioTypeFromStudioNo(Math.floor(activeId)),
+                timingNo:activeId%10,
+                email: user.email,
+                slotBookingData: {
+                    user: user._id,
+                    program: program,
+                    semester: semester,
+                    degree: programName,
+                    date: dateString,
+                    userEmail: user.email
+                },
+                programObject: programObjectSelected
+            }, {
+                headers: header
+            })
+            dispatchA({ type: ACTION_TYPE.BOOKING_SUCCESS })
+            unCheckSlotActive()
+            // slotStatuses(dispatch, dateString)
+            // slotStatusesWithType(dispatch, dateString, slotType, header)
+            success()
         } catch (err) {
             dispatchA({ type: ACTION_TYPE.BOOKING_FAIL })
             error()
@@ -450,6 +515,37 @@ const Slot = ({ setDatePickerOpen }) => {
                 </BoxContainer>
             </div>
         </Modal>
+        <Modal title={`You are booking slot for teacher`} open={isModalOpenYetAnother} onOk={handleOkYetAnother} onCancel={handleCancelYetAnother} okButtonProps={{ disabled: program === '' ? true : false }}>
+                <Title>Select the program</Title>
+                <Form>
+                    {/* <Input placeholder="eg: MBA" onChange={(e) => setProgram(e.target.value)} /> */}
+                    <Select name="semester" value={semester} onChange={(e) => setSemester(SEMESTERS[e.target.options.selectedIndex])}>
+                        {
+                            SEMESTERS && SEMESTERS.map((item, index) => (
+                                <Option value={item} key={index}>{item}</Option>
+                            ))
+                        }
+                    </Select>
+                    <Select name="programName" value={programName} onChange={(e) => setProgramName(PROGRAMNAMES[e.target.options.selectedIndex])}>
+                        {
+                            PROGRAMNAMES && PROGRAMNAMES.map((item, index) => (
+                                <Option value={item} key={index}>{item}</Option>
+                            ))
+                        }
+                    </Select>
+                    <Select name="programs" value={program} defaultValue={programs[0]?.courseName} onChange={(e) => { setProgram(programs[e.target.options.selectedIndex]?.courseName)
+                                                                                                                      setProgramObjectSelected (programs[e.target.options.selectedIndex])}}>
+                        {
+                            programs && programs.map((item) => (
+                                <Option value={item?.courseName} key={item._id} >{item?.courseName}</Option>
+                            ))
+                        }
+                    </Select>
+                    {program === '' ? <div style={{ marginLeft: '10px' }}>
+                        <span style={{ color: 'red' }}>*Please select a program*</span>
+                    </div>: ''}
+                </Form>
+            </Modal>
     </OuterContainer>
     )
 }
