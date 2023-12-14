@@ -129,12 +129,12 @@ const Option = styled.option`
 
 `
 const getStudioTypeFromStudioNo = (studioNo) => {
-    if (studioNo == '4') {
-      return 'numerical'
+    if (studioNo == 4) {
+        return 'numerical'
     } else {
-      return 'theory'
+        return 'theory'
     }
-  }
+}
 const Slot = ({ setDatePickerOpen }) => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isModalOpenTwo, setIsModalOpenTwo] = useState(false)
@@ -144,14 +144,14 @@ const Slot = ({ setDatePickerOpen }) => {
     const [programs, setPrograms] = useState([])
     const [semester, setSemester] = useState(SEMESTERS[0])
     const [programName, setProgramName] = useState(PROGRAMNAMES[0])
-    const [programObjectSelected,setProgramObjectSelected]  = useState({})
+    const [programObjectSelected, setProgramObjectSelected] = useState({})
     const { activeId, dateString, unCheckSlotActive, dispatch, loading, bookedSlots, handleBulkOnActive, setBulkOn, bulkIdsActive, bulkOn } = useContext(SlotStatusContext)
     const [program, setProgram] = useState("")
     const [state, dispatchA] = useReducer(bookingReducer, INITIAL_STATE_SLOT_REDUCER)
     const { user } = useContext(AuthContext)
     const [messageApi, contextHolder] = message.useMessage();
     const [showButton, setShowButton] = useState(true)
-    const [bookFor, setBookFor] = useState(''); // enums - teacher, 
+    const [bookFor, setBookFor] = useState(''); // enums - teacher,admin
     const [allTeachers, setAllTeachers] = useState([]); // all teachers array
     const [isLoading, setIsLoading] = useState(false); // loading spinner
     const [selectedTeacher, setSelectedTeacher] = useState(null); // selected teacher
@@ -213,68 +213,10 @@ const Slot = ({ setDatePickerOpen }) => {
     const handleCancelYetAnother = () => {
         setDatePickerOpen(true)
         setIsModalOpenYetAnother(false)
+        setProgram("")
+        setSelectedTeacher(null)
     }
     const handleOk = async (e) => {
-        e.preventDefault()
-        if (fullSlot) {
-            setDatePickerOpen(true)
-            setIsModalOpen(false)
-            dispatchA({ type: ACTION_TYPE.BOOKING_START })
-            const convertedArray = checkedState.map((element, index) => {
-                if (element === true) {
-                    return index + 1;
-                }
-            }).filter(Boolean);
-            try {
-                const res = await userRequest.post("/booking/bulk", {
-                    slotNos: bulkIdsActive,
-                    email: user.email,
-                    slotBookingData: {
-                        user: user._id,
-                        program: program,
-                        date: dateString,
-                        userEmail: user.email
-                    }
-                })
-                dispatchA({ type: ACTION_TYPE.BOOKING_SUCCESS })
-                unCheckSlotActive()
-                slotStatuses(dispatch, dateString)
-                success(res.data)
-                setFullSlot(false)
-                setBulkOn(false)
-                setCheckedState(new Array(data.length).fill(false))
-                handleBulkOnActive([])
-                return;
-            } catch (err) {
-                dispatchA({ type: ACTION_TYPE.BOOKING_FAIL })
-                error()
-                return;
-            }
-        }
-        setDatePickerOpen(true)
-        setIsModalOpen(false)
-        dispatchA({ type: ACTION_TYPE.BOOKING_START })
-        try {
-            const res = await userRequest.post("/booking/admin", {
-                slotNo: activeId,
-                email: user.email,
-                slotBookingData: {
-                    user: user._id,
-                    program: program,
-                    date: dateString,
-                    userEmail: user.email
-                }
-            })
-            dispatchA({ type: ACTION_TYPE.BOOKING_SUCCESS })
-            unCheckSlotActive()
-            slotStatuses(dispatch, dateString)
-            success(res.data)
-        } catch (err) {
-            dispatchA({ type: ACTION_TYPE.BOOKING_FAIL })
-            error()
-        }
-    }
-    const handleOkTwo = async (e) => {
         e.preventDefault()
         if (fullSlot) {
             setDatePickerOpen(true)
@@ -337,37 +279,45 @@ const Slot = ({ setDatePickerOpen }) => {
     const handleOkYetAnother = async (e) => {
         e.preventDefault()
         setDatePickerOpen(true)
-        setIsModalOpen(false)
+        setIsModalOpenYetAnother(false)
         dispatchA({ type: ACTION_TYPE.BOOKING_START })
         try {
-            await publicRequest.post("/booking", {
+            const res = await publicRequest.post("/booking", {
                 type: getStudioTypeFromStudioNo(Math.floor(activeId)),
-                timingNo:activeId%10,
-                email: user.email,
+                timingNo: activeId % 10,
+                email: selectedTeacher?.email,
                 slotBookingData: {
-                    user: user._id,
+                    user: selectedTeacher?._id,
                     program: program,
                     semester: semester,
                     degree: programName,
                     date: dateString,
-                    userEmail: user.email
+                    userEmail: selectedTeacher?.email
                 },
-                programObject: programObjectSelected
+                programObject: programObjectSelected,
+                bookingFrom: "admin",
+                slotNo: activeId
             }, {
                 headers: header
             })
             dispatchA({ type: ACTION_TYPE.BOOKING_SUCCESS })
             unCheckSlotActive()
-            // slotStatuses(dispatch, dateString)
+            slotStatuses(dispatch, dateString)
+            success(res.data)
             // slotStatusesWithType(dispatch, dateString, slotType, header)
-            success()
         } catch (err) {
             dispatchA({ type: ACTION_TYPE.BOOKING_FAIL })
             error()
         }
     }
     const handleOkType = async (e) => {
-        console.log("hellojidasdimenny")
+        setIsModalOpenType(false)
+        if (selectedTeacher != null) {
+            setIsModalOpenYetAnother(true)
+        }
+        if (bookFor == "admin") {
+            setIsModalOpen(true)
+        }
     }
     const warning = () => {
         messageApi.open({
@@ -499,6 +449,18 @@ const Slot = ({ setDatePickerOpen }) => {
         }
     }, [activeId, bulkOn])
 
+    const getProgramList = async () => {
+        try {
+            const res = await publicRequest.get(`/program?semester=${semester}&programName=${programName}&fetchType=teacher`)
+            setPrograms(res.data.programs)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    useEffect(() => {
+        getProgramList()
+    }, [semester, programName])
+
 
     return (<OuterContainer>
         {contextHolder}
@@ -520,20 +482,9 @@ const Slot = ({ setDatePickerOpen }) => {
         {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && showButton && !fullSlot && <Button onClick={handleBook} disable={state.posting || loading}>Book Now</Button>}
         {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && fullSlot && showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book Full Slot</Button>}
         {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && !showButton && <span className='text-danger p-2'>*Select future date or time slot to enable booking button*</span>}
-        <Modal title={`You are booking slot ${activeId % 10} of studio ${Math.floor(activeId / 10)}`} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okButtonProps={{ disabled: program === "" ? true : false }}>
-            <Title>Enter the Reason</Title>
-            <Form>
-                <Input placeholder="eg: Higher Authority" onChange={(e) => setProgram(e.target.value)} />
-            </Form>
-        </Modal>
-        <Modal title={`You are booking slot ${activeId % 10} of studio ${Math.floor(activeId / 10)}`} open={isModalOpenTwo} onOk={handleOkTwo} onCancel={handleCancelTwo} okButtonProps={{ disabled: program === "" ? true : false }}>
-            <Title>Enter the Reason for teacher</Title>
-            <Form>
-                <Input placeholder="eg: Higher Authority" onChange={(e) => setProgram(e.target.value)} />
-            </Form>
-        </Modal>
-        <Modal title='Select Type' open={isModalOpenType} onOk={handleOkType} onCancel={handleCancelType} okButtonProps={{ 
-            disabled: selectedTeacher === null ? true : false }}>
+        <Modal title='Select Type' open={isModalOpenType} onOk={handleOkType} onCancel={handleCancelType} okButtonProps={{
+            disabled: bookFor == "" ? true : (bookFor == "teacher" && selectedTeacher === null ? true : (bookFor == "admin" ? false : false))
+        }}>
             <div className='d-flex mt-3'>
                 <BoxContainer className={`${bookFor === "teacher" ? "bg-primary" : ""}`} onClick={() => handleBookFor('teacher')}>
                     <p className={`${bookFor === "teacher" ? "text-white" : ""}`}>
@@ -562,36 +513,44 @@ const Slot = ({ setDatePickerOpen }) => {
             </div>}
         </Modal>
         <Modal title={`You are booking slot for teacher`} open={isModalOpenYetAnother} onOk={handleOkYetAnother} onCancel={handleCancelYetAnother} okButtonProps={{ disabled: program === '' ? true : false }}>
-                <Title>Select the program</Title>
-                <Form>
-                    {/* <Input placeholder="eg: MBA" onChange={(e) => setProgram(e.target.value)} /> */}
-                    <Select name="semester" value={semester} onChange={(e) => setSemester(SEMESTERS[e.target.options.selectedIndex])}>
-                        {
-                            SEMESTERS && SEMESTERS.map((item, index) => (
-                                <Option value={item} key={index}>{item}</Option>
-                            ))
-                        }
-                    </Select>
-                    <Select name="programName" value={programName} onChange={(e) => setProgramName(PROGRAMNAMES[e.target.options.selectedIndex])}>
-                        {
-                            PROGRAMNAMES && PROGRAMNAMES.map((item, index) => (
-                                <Option value={item} key={index}>{item}</Option>
-                            ))
-                        }
-                    </Select>
-                    <Select name="programs" value={program} defaultValue={programs[0]?.courseName} onChange={(e) => { setProgram(programs[e.target.options.selectedIndex]?.courseName)
-                                                                                                                      setProgramObjectSelected (programs[e.target.options.selectedIndex])}}>
-                        {
-                            programs && programs.map((item) => (
-                                <Option value={item?.courseName} key={item._id} >{item?.courseName}</Option>
-                            ))
-                        }
-                    </Select>
-                    {program === '' ? <div style={{ marginLeft: '10px' }}>
-                        <span style={{ color: 'red' }}>*Please select a program*</span>
-                    </div>: ''}
-                </Form>
-            </Modal>
+            <Title>Select the program</Title>
+            <Form>
+                {/* <Input placeholder="eg: MBA" onChange={(e) => setProgram(e.target.value)} /> */}
+                <Select name="semester" value={semester} onChange={(e) => setSemester(SEMESTERS[e.target.options.selectedIndex])}>
+                    {
+                        SEMESTERS && SEMESTERS.map((item, index) => (
+                            <Option value={item} key={index}>{item}</Option>
+                        ))
+                    }
+                </Select>
+                <Select name="programName" value={programName} onChange={(e) => setProgramName(PROGRAMNAMES[e.target.options.selectedIndex])}>
+                    {
+                        PROGRAMNAMES && PROGRAMNAMES.map((item, index) => (
+                            <Option value={item} key={index}>{item}</Option>
+                        ))
+                    }
+                </Select>
+                <Select name="programs" value={program} defaultValue={programs[0]?.courseName} onChange={(e) => {
+                    setProgram(programs[e.target.options.selectedIndex]?.courseName)
+                    setProgramObjectSelected(programs[e.target.options.selectedIndex])
+                }}>
+                    {
+                        programs && programs.map((item) => (
+                            <Option value={item?.courseName} key={item._id} >{item?.courseName}</Option>
+                        ))
+                    }
+                </Select>
+                {program === '' ? <div style={{ marginLeft: '10px' }}>
+                    <span style={{ color: 'red' }}>*Please select a program*</span>
+                </div> : ''}
+            </Form>
+        </Modal>
+        <Modal title={`You are booking slot ${activeId % 10} of studio ${Math.floor(activeId / 10)} for admin`} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okButtonProps={{ disabled: program === "" ? true : false }}>
+            <Title>Enter the Reason</Title>
+            <Form>
+                <Input placeholder="eg: Higher Authority" onChange={(e) => setProgram(e.target.value)} />
+            </Form>
+        </Modal>
     </OuterContainer>
     )
 }

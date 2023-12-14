@@ -311,7 +311,10 @@ router.post("/", async (req, res, next) => {
       return res.status(201).json({ msg: `reserve booking has been made in studio ${Math.trunc(randomSlotNoWaiting / 10)} and slot ${randomSlotNoWaiting % 10}`, waitingNo: newWaitingNumber })
     }
     const slotNos = availableSlots.map(slot => slot.slotNo)
-    const randomSlotNo = getRandomItem(slotNos)
+    let randomSlotNo = getRandomItem(slotNos)
+    if(req.body.bookingFrom == "admin"){
+      randomSlotNo = req.body.slotNo
+    }
 
     const updatedSlot = await Slot.findOneAndUpdate(
       {
@@ -1183,10 +1186,11 @@ router.post("/delete", async (req, res) => {
     //deleting event of deleted booking
     await deleteEvent(refrestToken.refreshTokenGoogle, eventId.eventId)
     //deleting event of recorder if recorder is there
-    if(slotData[0].slotBookingsData[0]?.recorder != ""){
+    console.log(slotData[0].slotBookingsData[0]?.recorder)
+    if(slotData[0].slotBookingsData[0]?.recorder != undefined){
       receiversOfEmail.push(slotData[0].slotBookingsData[0]?.recorder)
       const recorderFromDb = await User.findOne({email: slotData[0].slotBookingsData[0]?.recorder})
-      const refreshTokenRecorderQueue = recorderFromDb.refreshTokenGoogle
+      const refreshTokenRecorderQueue = recorderFromDb?.refreshTokenGoogle
       const eventIdRecorder = await CalendarEvent.findOneAndDelete({date: slotData[0].slotBookingsData[0]?.date, studioNo:req.body.studioNo, timingNo: req.body.timingNo, userEmail: slotData[0].slotBookingsData[0]?.recorder})
       await deleteEvent(refreshTokenRecorderQueue,eventIdRecorder.eventId)
     }
