@@ -8,7 +8,8 @@ const mongoose = require('mongoose');
 const { oAuth2Client } = require('../middleware/verifyGoogle');
 const { google } = require('googleapis');
 const CalendarEvent = require('../models/CalendarEvent');
-const excelJs = require('exceljs')
+const excelJs = require('exceljs');
+const { UserRefreshClient } = require('google-auth-library');
 const bookingDoneTemplateId = process.env.BOOKINGDONEEMAILTEMPLATE
 const deleteDoneTemplateId = process.env.DELETEDONEEMAILTEMPLATE
 const waitingDoneTemplateId = process.env.WAITINGDONEEMAILTEMPLATE
@@ -312,7 +313,7 @@ router.post("/", async (req, res, next) => {
     }
     const slotNos = availableSlots.map(slot => slot.slotNo)
     let randomSlotNo = getRandomItem(slotNos)
-    if(req.body.bookingFrom == "admin"){
+    if (req.body.bookingFrom == "admin") {
       randomSlotNo = req.body.slotNo
     }
 
@@ -345,14 +346,39 @@ router.post("/", async (req, res, next) => {
     await sendTemplatedEmailSES(receiversOfEmail, 'studio-booking-confirmed-idol', dynamicTemplateData)
     const user = await User.findOne({ email: req.body.email })
     const refreshToken = user.refreshTokenGoogle
-
+    const userfortoken = new UserRefreshClient(
+      process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET,
+      refreshToken,
+    );
+    const { credentials } = await userfortoken.refreshAccessToken(); // optain new tokens
     const description = `You have a booking at Studio Number ${Math.trunc(randomSlotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${req.body.slotBookingData.program} and degree: ${req.body.slotBookingData.degree}. Please report 10 minutes before the slot time`
-    await createEvent(refreshToken, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), req.body.email, description, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
+    await createEvent(credentials?.refresh_token, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), req.body.email, description, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
+    //update new credentials for user
+    await User.findOneAndUpdate({ email: req.body.email }, {
+      access_token: credentials.access_token,
+      expiry_date: credentials.expiry_date,
+      id_token: credentials.id_token,
+      refreshTokenGoogle: credentials.refresh_token
+    })
     if (recorder != '') {
       const recorderUser = await User.findOne({ email: recorder })
       const refreshTokenRecorder = recorderUser.refreshTokenGoogle
+      const userfortokenforrecorder = new UserRefreshClient(
+        process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET,
+        refreshTokenRecorder,
+      );
+      const { credentialsrecorder } = await userfortokenforrecorder.refreshAccessToken(); // optain new tokens
+
       const descriptionRecorder = `You have a booking at Studio Number ${Math.trunc(randomSlotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${req.body.slotBookingData.program} and degree: ${req.body.slotBookingData.degree} from ${req.body.email}. Please report 10 minutes before the slot time`
-      await createEvent(refreshTokenRecorder, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), recorder, descriptionRecorder, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
+      await createEvent(credentialsrecorder.refresh_token, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), recorder, descriptionRecorder, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
+
+      //update new credentials for user
+      await User.findOneAndUpdate({ email: recorder }, {
+        access_token: credentialsrecorder.access_token,
+        expiry_date: credentialsrecorder.expiry_date,
+        id_token: credentialsrecorder.id_token,
+        refreshTokenGoogle: credentialsrecorder.refresh_token
+      })
     }
     res.status(200).json(`booking has been made in studio ${Math.trunc(randomSlotNo / 10)} and slot ${randomSlotNo % 10}`)
   } catch (err) {
@@ -1163,7 +1189,7 @@ router.post("/delete", async (req, res) => {
       let receiversOfEmail = [data._doc.userEmail]
       if (data._doc?.recorder != '') {
         receiversOfEmail.push(data._doc?.recorder)
-        const recorderFromDb = await User.findOne({email: data._doc.recorder})
+        const recorderFromDb = await User.findOne({ email: data._doc.recorder })
         const refreshTokenRecorderQueue = recorderFromDb.refreshTokenGoogle
         const descriptionReciever = `You have a booking at Studio Number ${req.body.studioNo} on date: ${localDateStringToDDMMYYYY(data._doc.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${data._doc.program} and degree: ${data._doc.degree} from ${data._doc.userEmail}. Please report 10 minutes before the slot time`
         await createEvent(refreshTokenRecorderQueue, req.body.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), data._doc.recorder, descriptionReciever, req.body.slotNo, req.body.studioNo, getStudioTypeFromStudioNo(req.body.studioNo))
@@ -1187,12 +1213,12 @@ router.post("/delete", async (req, res) => {
     await deleteEvent(refrestToken.refreshTokenGoogle, eventId.eventId)
     //deleting event of recorder if recorder is there
     console.log(slotData[0].slotBookingsData[0]?.recorder)
-    if(slotData[0].slotBookingsData[0]?.recorder != undefined){
+    if (slotData[0].slotBookingsData[0]?.recorder != undefined) {
       receiversOfEmail.push(slotData[0].slotBookingsData[0]?.recorder)
-      const recorderFromDb = await User.findOne({email: slotData[0].slotBookingsData[0]?.recorder})
+      const recorderFromDb = await User.findOne({ email: slotData[0].slotBookingsData[0]?.recorder })
       const refreshTokenRecorderQueue = recorderFromDb?.refreshTokenGoogle
-      const eventIdRecorder = await CalendarEvent.findOneAndDelete({date: slotData[0].slotBookingsData[0]?.date, studioNo:req.body.studioNo, timingNo: req.body.timingNo, userEmail: slotData[0].slotBookingsData[0]?.recorder})
-      await deleteEvent(refreshTokenRecorderQueue,eventIdRecorder.eventId)
+      const eventIdRecorder = await CalendarEvent.findOneAndDelete({ date: slotData[0].slotBookingsData[0]?.date, studioNo: req.body.studioNo, timingNo: req.body.timingNo, userEmail: slotData[0].slotBookingsData[0]?.recorder })
+      await deleteEvent(refreshTokenRecorderQueue, eventIdRecorder.eventId)
     }
 
 
@@ -1644,6 +1670,44 @@ router.post("/quick-stats", async (req, res) => {
   } catch (error) {
     res.status(401).json({ msg: 'there is some error', err: error.message })
 
+  }
+})
+
+//temp update
+router.post("/temp/update/booking", async (req, res) => {
+  try {
+    const booking = await Slot.findOneAndUpdate({ "slotNo": req.body.slotNo, "slotBookingsData.date": req.body.date }, {
+      "$set": {
+        "slotBookingsData.$.userEmail": req.body.userEmail,
+        "slotBookingsData.$.user": req.body.user,
+        "slotBookingsData.$.program": req.body.program,
+        "slotBookingsData.$.semester": req.body.semester,
+        "slotBookingsData.$.degree": req.body.degree,
+      }
+    })
+    res.status(201).json({ msg: "done" })
+  } catch (error) {
+    res.status(400).json({ msg: error.message })
+  }
+})
+
+//temp create
+router.post("/temp/create/booking", async(req,res)=>{
+  try {
+    const updatedSlot = await Slot.findOneAndUpdate(
+      {
+        "slotNo": req.body.slotNo,
+        'slotBookingsData.date': { $ne: new Date(req.body.slotBookingData.date) }
+      },
+      {
+        $push: {
+          "slotBookingsData": req.body.slotBookingData
+        },
+      }, { new: true }
+    );
+    res.status(201).json({msg: "done"})
+  } catch (error) {
+    res.status(401).json({msg: error.message})
   }
 })
 

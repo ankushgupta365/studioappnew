@@ -17,7 +17,10 @@ const UserSchema = mongoose.Schema({
     },
     role: {type: String, default: "teacher"},
     googleId: {type: String},
-    refreshTokenGoogle: {type: String}
+    refreshTokenGoogle: {type: String},
+    access_token: {type: String},
+    id_token: {type: String},
+    expiry_date: {type: Date}
 }, { timestamps: true });
 
 //midlleware before saving

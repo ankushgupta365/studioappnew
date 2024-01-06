@@ -283,7 +283,7 @@ const Slot = ({ setDatePickerOpen }) => {
         dispatchA({ type: ACTION_TYPE.BOOKING_START })
         try {
             const res = await publicRequest.post("/booking", {
-                type: getStudioTypeFromStudioNo(Math.floor(activeId)),
+                type: getStudioTypeFromStudioNo(Math.floor(activeId/10)),
                 timingNo: activeId % 10,
                 email: selectedTeacher?.email,
                 slotBookingData: {

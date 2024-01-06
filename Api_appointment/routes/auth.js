@@ -5,7 +5,7 @@ const User = require('../models/User')
 const jwt = require('jsonwebtoken');
 const { google } = require('googleapis')
 
-const REFRESH_TOKEN = "1//0gkSnhgp0EqAkCgYIARAAGBASNwF-L9IrsVO65X25QZquayVPGT5lWQgZT2l4otkMhpT65-56DIwkfX4JEGO2HPS8lGow1n2JNhg"
+const REFRESH_TOKEN = "1//0gHEOUBxLowZcCgYIARAAGBASNwF-L9IrBU9BNiIs3QHHgFsxNB9_ib1aaZ7MO1hZeUgQso0Gr01onrce5lue61LVoNq-IyHGKew"
 //Register
 router.post("/register", async (req, res) => {
     const newUser = new User({
@@ -87,7 +87,10 @@ router.post("/google/register", async (req, res) => {
             name: payload?.given_name,
             img: payload?.picture,
             googleId: payload.sub,
-            refreshTokenGoogle: tokens.refresh_token
+            refreshTokenGoogle: tokens.refresh_token,
+            access_token: tokens.access_token,
+            id_token: tokens.id_token,
+            expiry_date: new Date(tokens.expiry_date)
         })
         try {
             await newUser.save();
@@ -120,6 +123,8 @@ router.post("/google/login", async (req, res) => {
 
     const payload = ticket.getPayload()
     if (payload) {
+        console.log(payload)
+        console.log(tokens)
         const user = await User.findOne({ googleId: payload.sub })
         if (!user) {
             return res.status(401).json({ msg: "not authorized, please register" })
@@ -131,7 +136,10 @@ router.post("/google/login", async (req, res) => {
         await User.findOneAndUpdate({
             googleId: payload.sub
         },{
-            refreshTokenGoogle: tokens.refresh_token
+            refreshTokenGoogle: tokens.refresh_token,
+            expiry_date: new Date(tokens.expiry_date),
+            id_token: tokens.id_token,
+            access_token: tokens.access_token
         })
         const {refreshTokenGoogle,...data} = user._doc
         return res.status(201).json({ ...data, ...payload })
