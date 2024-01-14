@@ -30,34 +30,34 @@ const Text = styled.p`
     color: ${props => props.active === true ? "#fff" : "#333"};
     margin-bottom: 0;
 `
-const Box = ({ slot, studioUnavailable,slotType }) => {
+const Box = ({ slot, studioUnavailable }) => {
     const [active, setActive] = useState(false)
     const [reserveActive, setReserveActive] = useState(false)
-    const { bookedSlots, activeIds, handleSlotActive, disableSlots, unCheckSlotActive, dateString, loading, setTimingNo } = useContext(SlotStatusContext)
-    console.log("reserveActive ", reserveActive)
-    console.log("active ", active)
+    const { bookedSlots, activeId, handleSlotActive, disableSlots, unCheckSlotActive, dateString, loading, setTimingNo } = useContext(SlotStatusContext)
+    // console.log("reserveActive ", reserveActive)
+    // console.log("active ", active)
 
-    const handleClick = (slotIds) => {
+    const handleClick = (slotId) => {
         if(studioUnavailable == true){
             return;
         }
-       else if (!slot.ids.every(ae => bookedSlots.includes(ae)) && !slot.ids.every(ae => disableSlots.includes(ae))) {
-            if (slot.ids.every(ae => activeIds.includes(ae))) {
+       else if (!bookedSlots.includes(slot.id) && !disableSlots.includes(slot.id)) {
+            if (activeId === slotId) {
                 setActive(prev => !prev)
                 unCheckSlotActive()
             } else {
                 setActive(prev => !prev)
-                handleSlotActive(slotIds)
+                handleSlotActive(slotId)
                 setTimingNo(slot.timingNo)
             }
-        } else if (slot.ids.every(ae => bookedSlots.includes(ae)) && !slot.ids.every(ae => disableSlots.includes(ae))) {
-            if (slot.ids.every(ae => activeIds.includes(ae))) {
+        } else if (bookedSlots.includes(slot.id) && !disableSlots.includes(slot.id)) {
+            if (slot.id ==  activeId) {
                 setReserveActive(prev => !prev)
                 unCheckSlotActive()
             } else {
                 setReserveActive(true)
                 setTimingNo(slot.timingNo)
-                handleSlotActive(slotIds)
+                handleSlotActive(slotId)
             }
         }
     }
@@ -66,12 +66,10 @@ const Box = ({ slot, studioUnavailable,slotType }) => {
         setActive(false)
         setReserveActive(false)
         unCheckSlotActive()
-    }, [dateString, loading,slotType])
+    }, [dateString, loading])
     return (
-        //arr1.some( ai => arr2.includes(ai) );  arr2 include atleast one element of arr1
-        //arr1.every( ai => arr2.includes(ai) ); arr2 include every element of arr1
-        <Tooltip title={slot.ids.every(ae => bookedSlots.includes(ae)) ? "booked" : (slot.ids.every(ae => disableSlots.includes(ae)) ? "unselect previous" : null)} color={slot.ids.every(ae => bookedSlots.includes(ae)) ? "cyan" : "red"}>
-            <BoxContainer active={active} reserveActive={reserveActive} onClick={() => handleClick(slot.ids)} booked={slot.ids.every(ae => bookedSlots.includes(ae))} disable={slot.ids.every(ae => disableSlots.includes(ae))} unavailable={studioUnavailable}>
+        <Tooltip title={bookedSlots.includes(slot.id)? "booked": (disableSlots.includes(slot.id)? "unselect previoud": null)} color={bookedSlots.includes(slot.id) ? "cyan" : "red"}>
+            <BoxContainer active={active} reserveActive={reserveActive} onClick={() => handleClick(slot.id)} booked={bookedSlots.includes(slot.id)} disable={disableSlots.includes(slot.id)} unavailable={studioUnavailable}>
                 {studioUnavailable === true ? <CgUnavailable size={20} color='#aaaaaa' /> : <Text>{slot.time}</Text>}
             </BoxContainer>
         </Tooltip>
@@ -79,3 +77,5 @@ const Box = ({ slot, studioUnavailable,slotType }) => {
 }
 
 export default Box
+
+// slot.id.every(ae => bookedSlots.includes(ae)) ? "booked" : (slot.id.every(ae => disableSlots.includes(ae)) ? "unselect previous" : null)

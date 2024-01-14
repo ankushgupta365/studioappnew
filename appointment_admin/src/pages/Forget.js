@@ -2,7 +2,6 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import styled from "styled-components"
 import { publicRequest } from "../requestMethods"
-import {GoogleOutlined} from "@ant-design/icons"
 
 const Container = styled.div`
     width: 100vw;
@@ -41,15 +40,14 @@ const Agreement = styled.span`
 const Button = styled.button`
     width: 40%;
     border: none;
-    background-color: #d90429;
+    background-color: ${props => props.disabled ? "#6C757D" : "#d90429"};
     color: white;
-    cursor: pointer;
+    cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
     padding: 15px 20px;
     border-radius: 6px;
     font-weight: bold;
     font-size: 14px;
     &:hover {
-    background-color: #ef233c;
     transform: scale(0.96)
   }
 `
@@ -58,43 +56,37 @@ const Text = styled.p`
    text-decoration: underline;
    cursor: pointer;
 `
-const Register = () => {
-  const [credentials,setCredentials] = useState({
-    name: undefined,
-    lastname: undefined,
-    email: undefined,
-    password: undefined,
-
-  })
-  const navigate = useNavigate()
+const Forget = () => {
+  const [email, setEmail] = useState("")
+  const [loading,setLoading] = useState(false)
   const handleChange = (e)=>{
-    setCredentials((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+    setEmail(e.target.value);
   }
-  const handleRegister = async (e)=>{
+  const handleEmailSubmit = async (e)=>{
     e.preventDefault()
-
+    setLoading(true)
     try {
-      await publicRequest.post("/auth/register",credentials)
-      alert("Registration successfull, wait for approval by admin and then you can login")
-      navigate("/login")
+      await publicRequest.post("/auth/forget",{email})
+      setEmail("")
+      alert("Password reset link will be sent on to your email, if it is registered")
+      setLoading(false)
     } catch (error) {
       console.log(error)
-      alert("There is some error, please try again later")
+      setEmail("")
+      alert("Email does not found in our Databse or may be there is some error, please try again later")
+      setLoading(false)
     }
   }
   return (
     <Container>
       <Wrapper>
-        <Title>CREATE AN ACCOUNT</Title>
+        <Title>Forget Password</Title>
         <Form>
-          <Input placeholder="first name" type="name" id="name" onChange={(e)=>handleChange(e)}/>
-          <Input placeholder="last name" type="lastname" id="lastname" onChange={(e)=>handleChange(e)}/>
-          <Input placeholder="email" type="email" id="email" onChange={(e)=>handleChange(e)}/>
-          <Input placeholder="password" type="password" id="password" onChange={(e)=>handleChange(e)}/>
+          <Input placeholder="registered email" type="email" id="email" value={email} onChange={(e)=>handleChange(e)}/>
           <Agreement>
-            By creating an account, I consent to the processing of my personal data in accordance with the <b>PRIVACY POLICY</b>
+            You will get the password reset link on your email, if you already have a registered account
           </Agreement>
-          <Button onClick={(e)=>handleRegister(e)}>CREATE</Button>
+          <Button onClick={(e)=>handleEmailSubmit(e)} disabled={loading}>Send Reset Link</Button>
         </Form>
         <Link to="/login" style={{ textDecoration: "none", marginTop: "6px", display: "block" }} >
           <Text>Login</Text>
@@ -104,4 +96,4 @@ const Register = () => {
   )
 }
 
-export default Register
+export default Forget

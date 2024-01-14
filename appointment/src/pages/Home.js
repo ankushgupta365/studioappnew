@@ -52,11 +52,11 @@ const Card = styled.div`
 `
 const StatCard = styled.div`
     margin-top: 40px;
-    padding: 18px;
+    padding: 4px;
     border-radius: 10px;
     background-color: #f1f1f1;
     box-shadow: 0px 1px 9px -1px rgba(179,173,179,1);
-    width: 450px;
+    width: 100px;
 `
 const Colors = styled.ul`
     list-style: none;
@@ -122,18 +122,14 @@ const Home = () => {
          getHolidays()
     },[])
 
-    const onChange = (e) => {
-        setSlotType(e.target.value);
-    };
 
-    // useEffect(() => {
-    //     // let yourDate = new Date()
-    //     // const offset = yourDate.getTimezoneOffset()
-    //     // yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
-    //     // const stringDate = yourDate.toISOString().split('T')[0]
-    //     // // slotStatuses(dispatch, stringDate)
-    //     // slotStatusesWithType(dispatch,stringDate,slotType)
-    // }, [slotType,stringDate])
+    useEffect(() => {
+        let yourDate = new Date()
+        const offset = yourDate.getTimezoneOffset()
+        yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
+        const stringDate = yourDate.toISOString().split('T')[0]
+        slotStatuses(dispatch, stringDate)
+    }, [dispatch])
     return (
         <OuterContainer>
             <Navbar />
@@ -149,12 +145,6 @@ const Home = () => {
             <Container>
                 <DatesPicker datePickerOpen={datePickerOpen} holidays={holidays} />
                 <RadioContainer>
-                    <Radio.Group onChange={onChange} value={slotType} size='large' style={{ backgroundColor: "#f1f1f1", padding: '10px', borderRadius: '10px', boxShadow: '0px 1px 9px -1px rgba(179,173,179,1)' }}>
-                        <Space direction='vertical' style={{ margin: '8px', padding: '8px' }}>
-                            <Radio value='theory'>Theory</Radio>
-                            <Radio value='numerical'>Numerical</Radio>
-                        </Space>
-                    </Radio.Group>
                     <Card>
                         <Colors>
                             <Color ><ColorIndicator type='available' />Available</Color>
@@ -162,33 +152,33 @@ const Home = () => {
                             <Color ><ColorIndicator type='selectedBooked' />In Queue</Color>
                         </Colors>
                     </Card>
-                    <StatCard>
+                    {/* <StatCard>
                         {loadingStats === true?'loading':
                             <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
                             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                                 <p style={{margin: '0'}}>Today</p>
-                                <p style={{fontSize: '35px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{todayCount}</p>
+                                <p style={{fontSize: '18px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{todayCount}</p>
                             </div>
                             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                                 <p style={{margin: '0'}}>Past</p>
-                                <p style={{fontSize: '35px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{pastCount}</p>
+                                <p style={{fontSize: '18px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{pastCount}</p>
                             </div>
                             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                                 <p style={{margin: '0'}}>Upcoming</p>
-                                <p style={{fontSize: '35px', fontWeight: 'bold', color: 'rgb(160, 32, 240)', margin: '0'}}>{upcomingCount}</p>
+                                <p style={{fontSize: '18px', fontWeight: 'bold', color: 'rgb(160, 32, 240)', margin: '0'}}>{upcomingCount}</p>
                             </div>
                             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                                 <p style={{margin: '0'}}>Queue</p>
-                                <p style={{fontSize: '35px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{waitingCount}</p>
+                                <p style={{fontSize: '18px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{waitingCount}</p>
                             </div>
                             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                                 <p style={{margin: '0'}}>Cancelled</p>
-                                <p style={{fontSize: '35px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{cancelledCount}</p>
+                                <p style={{fontSize: '18px', fontWeight: 'bold', color: 'rgb(160, 32, 240)',margin: '0' }}>{cancelledCount}</p>
                             </div>
                         </div>}
-                    </StatCard>
+                    </StatCard> */}
                 </RadioContainer>
-                <Slot setDatePickerOpen={setDatePickerOpen} slotType={slotType} setSlotType={setSlotType} />
+                <Slot setDatePickerOpen={setDatePickerOpen}   />
             </Container>
             <Modal open={isModalOpen} centered width={360} footer={[ <Button key="back" onClick={handleCancelModal} type='primary'>Ok</Button>]} onCancel={handleCancelModal}>
                 <div>

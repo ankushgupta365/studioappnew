@@ -80,16 +80,17 @@ margin: 20px;
 margin-bottom: 40px;
 `
 const Register = () => {
-  // const [credentials, setCredentials] = useState({
-  //   username: undefined,
-  //   email: undefined,
-  //   password: undefined,
+  const [credentials, setCredentials] = useState({
+    name: undefined,
+    lastname: undefined,
+    email: undefined,
+    password: undefined,
 
-  // })
+  })
   const navigate = useNavigate()
-  // const handleChange = (e) => {
-  //   setCredentials((prev) => ({ ...prev, [e.target.id]: e.target.value }));
-  // }
+  const handleChange = (e) => {
+    setCredentials((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+  }
   const [err,setErr] = useState(false)
   const handleRegister = async (code) => {
     try {
@@ -98,6 +99,20 @@ const Register = () => {
     } catch (error) {
       setErr(true)
       console.log(error)
+    }
+  }
+
+  const handleRegisterSimple = async (e)=>{
+    e.preventDefault()
+
+    try {
+      await publicRequest.post("/auth/register",credentials)
+      alert("Registration successfull, wait for approval by admin and then you can login")
+      navigate("/login")
+    } catch (error) {
+      console.log(error)
+      setErr(true)
+      alert("There is some error, please try again later")
     }
   }
 
@@ -117,20 +132,19 @@ const Register = () => {
     <Container>
       <Wrapper>
       <Image src="https://www.cuchd.in/about/assets/images/cu-logo.png" />
-        {/* <Title>CREATE AN ACCOUNT</Title> */}
-        {/* <Form>
-          <Input placeholder="name" type="name" id="name" onChange={(e) => handleChange(e)} />
+        <Title>CREATE AN ACCOUNT</Title>
+        <Form>
+          <Input placeholder="first name" type="name" id="name" onChange={(e) => handleChange(e)} />
           <Input placeholder="last name" type="lastname" id="lastname" onChange={(e) => handleChange(e)} />
-          <Input placeholder="username" type="username" id="username" onChange={(e) => handleChange(e)} />
           <Input placeholder="email" type="email" id="email" onChange={(e) => handleChange(e)} required pattern="/^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/" />
           <Input placeholder="password" type="password" id="password" onChange={(e) => handleChange(e)} />
           <Agreement>
             By creating an account, I consent to the processing of my personal data in accordance with the <b>PRIVACY POLICY</b>
           </Agreement>
-          <Button onClick={handleRegister} type="submit">CREATE</Button>
-        </Form> */}
+          <Button onClick={(e)=>handleRegisterSimple(e)} type="submit">CREATE</Button>
+        </Form>
        
-        <Button onClick={googleLogintwo}><GoogleOutlined style={{marginRight: "5px", fontSize:"20px"}}/>Sign up Google</Button>
+        {/* <Button onClick={googleLogintwo}><GoogleOutlined style={{marginRight: "5px", fontSize:"20px"}}/>Sign up Google</Button> */}
         <Link to="/login" style={{ textDecoration: "none" }} >
           <Text>Login</Text>
         </Link>

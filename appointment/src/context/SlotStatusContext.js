@@ -22,7 +22,7 @@ const SlotStatusReducer = (state, action) => {
             break;
         case "GET_STATUS_SUCCESS":
             return {
-                bookedSlots: action.payload,
+                bookedSlots: action.payload.slotNos,
                 loading: false,
                 error: null,
             };
@@ -41,7 +41,7 @@ const SlotStatusReducer = (state, action) => {
 
 export const SlotStatusContextProvider = ({ children }) => {
     const [state, dispatch] = useReducer(SlotStatusReducer, INITIAL_STATE);
-    const [activeIds, setActiveIds] = useState([])
+    const [activeId, setActiveId] = useState(null)
     const [disableSlots, setDisableSlots] = useState([])
     const [timingNo,setTimingNo] = useState(0)
     const [dateString, setDateString] = useState(
@@ -54,21 +54,21 @@ export const SlotStatusContextProvider = ({ children }) => {
         // }
         null
     )
-    const handleSlotActive = (slotIds) => {
-        setActiveIds(slotIds)
+    const handleSlotActive = (slotId) => {
+        setActiveId(slotId)
         //disable others except the given slotIds
-        disableOthers(slotIds)
+        disableOthers(slotId)
     }
-    const disableOthers = (slotIds) => {
+    const disableOthers = (slotId) => {
         //disable others except the slotId given in arguments
         const list = SLOT_NO_LIST.filter((slotNo) => {
-            return !slotIds.includes(slotNo)
+            return slotNo !== slotId
         })
         setDisableSlots(list)
     }
     const unCheckSlotActive = () => {
         setDisableSlots([])
-        setActiveIds([])
+        setActiveId(null)
     }
     return (
         <SlotStatusContext.Provider
@@ -77,7 +77,7 @@ export const SlotStatusContextProvider = ({ children }) => {
                 loading: state.loading,
                 error: state.error,
                 dispatch,
-                activeIds,
+                activeId,
                 handleSlotActive,
                 disableSlots,
                 unCheckSlotActive,

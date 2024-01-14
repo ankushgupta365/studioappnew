@@ -2,10 +2,10 @@ import styled from "styled-components"
 import { useState, useContext } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { AuthContext } from "../context/AuthContext"
-import axios from "axios"
 import { useGoogleLogin } from "@react-oauth/google"
 import { GoogleOutlined } from "@ant-design/icons"
 import { publicRequest } from "../requestMethods"
+import {message} from 'antd'
 
 const Container = styled.div`
     width: 100vw;
@@ -78,10 +78,34 @@ margin: 20px;
 margin-bottom: 40px;
 `
 const Login = () => {
-    // const [email, setEmail] = useState("");
-    // const [password, setPassword] = useState("")
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("")
     const { loading, error, dispatch } = useContext(AuthContext);
+    const [messageApi, contextHolder] = message.useMessage();
     const navigate = useNavigate()
+
+    const handleLoginSimple = async (e) => {
+        e.preventDefault()
+        messageApi.destroy()
+        messageApi.open({
+            type: 'loading',
+            content: "Action in progress...",
+            duration: 0
+        })
+        dispatch({ type: "LOGIN_START" })
+        try {
+            const res = await publicRequest.post("/auth/login", { email, password })
+            messageApi.destroy()
+            dispatch({ type: "LOGIN_SUCCESS", payload: res.data })
+        } catch (error) {
+            messageApi.destroy()
+            dispatch({ type: "LOGIN_FAILURE", payload: error.response.data })
+            messageApi.open({
+                type: 'error',
+                content: `${error.response.data}`
+            })
+        }
+    }
 
     const handleLogin = async (code) => {
         dispatch({ type: "LOGIN_START" });
@@ -107,18 +131,21 @@ const Login = () => {
     })
     return (
         <Container>
+            {contextHolder}
             <Wrapper>
                 <Image src="https://www.cuchd.in/about/assets/images/cu-logo.png" />
-                {/* <Form>
+                <Form>
                     <Input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
                     <Input placeholder="password" type="password" onChange={(e) => setPassword(e.target.value)} />
-                    <Button onClick={handleLogin} disabled={loading}>Login</Button>
-                    <Link>Forgot your password?</Link>
-                    
-                    
-                </Form> */}
-                <Button onClick={() => googleLogintwo()} disabled={loading}><GoogleOutlined style={{marginRight: "5px", fontSize:"20px"}}/>Sign in with Google</Button>
-                {error && <Error>please create an account if not already done or wait for approval from admin</Error>}
+                    <Button onClick={(e)=>handleLoginSimple(e)} disabled={loading}>Login</Button>
+                    <Link to="/forget/password">
+                        <Text>
+                            Forget Password?
+                        </Text>
+                    </Link>
+                </Form>
+                {/* <Button onClick={() => googleLogintwo()} disabled={loading}><GoogleOutlined style={{marginRight: "5px", fontSize:"20px"}}/>Sign in with Google</Button> */}
+                {error && <Error>{error}</Error>}
                 <Link to="/register" style={{ textDecoration: "none" }} >
                     <Text>Create an Account</Text>
                 </Link>

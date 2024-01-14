@@ -135,6 +135,13 @@ const getStudioTypeFromStudioNo = (studioNo) => {
         return 'theory'
     }
 }
+const getBookingInType = (arg) => {
+    if (arg === false) {
+        return 'past'
+    } else {
+        return 'current'
+    }
+}
 const Slot = ({ setDatePickerOpen }) => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isModalOpenTwo, setIsModalOpenTwo] = useState(false)
@@ -283,7 +290,7 @@ const Slot = ({ setDatePickerOpen }) => {
         dispatchA({ type: ACTION_TYPE.BOOKING_START })
         try {
             const res = await publicRequest.post("/booking", {
-                type: getStudioTypeFromStudioNo(Math.floor(activeId/10)),
+                type: getStudioTypeFromStudioNo(Math.floor(activeId / 10)),
                 timingNo: activeId % 10,
                 email: selectedTeacher?.email,
                 slotBookingData: {
@@ -296,7 +303,8 @@ const Slot = ({ setDatePickerOpen }) => {
                 },
                 programObject: programObjectSelected,
                 bookingFrom: "admin",
-                slotNo: activeId
+                slotNo: activeId,
+                bookingIn: getBookingInType(showButton)
             }, {
                 headers: header
             })
@@ -481,7 +489,7 @@ const Slot = ({ setDatePickerOpen }) => {
         </Container>
         {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && showButton && !fullSlot && <Button onClick={handleBook} disable={state.posting || loading}>Book Now</Button>}
         {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && fullSlot && showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book Full Slot</Button>}
-        {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && !showButton && <span className='text-danger p-2'>*Select future date or time slot to enable booking button*</span>}
+        {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && !showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book for Past</Button>}
         <Modal title='Select Type' open={isModalOpenType} onOk={handleOkType} onCancel={handleCancelType} okButtonProps={{
             disabled: bookFor == "" ? true : (bookFor == "teacher" && selectedTeacher === null ? true : (bookFor == "admin" ? false : false))
         }}>

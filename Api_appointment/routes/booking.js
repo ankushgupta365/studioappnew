@@ -3,7 +3,7 @@ const { verifyTokenAndAuthorization, verifyTokenAndAdmin } = require("./verifyTo
 const User = require('../models/User');
 const Slot = require('../models/Slot');
 const sendEmail = require('./email');
-const sendTemplatedEmailSES = require('./emailSES')
+const {sendTemplatedEmailSES} = require('./emailSES')
 const mongoose = require('mongoose');
 const { oAuth2Client } = require('../middleware/verifyGoogle');
 const { google } = require('googleapis');
@@ -317,7 +317,7 @@ router.post("/", async (req, res, next) => {
       randomSlotNo = req.body.slotNo
     }
 
-    const updatedSlot = await Slot.findOneAndUpdate(
+    await Slot.findOneAndUpdate(
       {
         "slotNo": randomSlotNo,
         'slotBookingsData.date': { $ne: new Date(req.body.slotBookingData.date) }
@@ -326,60 +326,64 @@ router.post("/", async (req, res, next) => {
         $push: {
           "slotBookingsData": slotBookingData
         },
-      }, { new: true }
+      }
     );
 
 
-    const dynamicTemplateData = {
-      email: req.body.email,
-      type: req.body.type,
-      date: localDateStringToDDMMYYYY(req.body.slotBookingData.date),
-      program: req.body.slotBookingData.program,
-      timing: getTimingNoString(req.body.timingNo),
-      slotNo: Math.trunc(randomSlotNo / 10),
+    if(req.body.bookingIn != 'past'){
+      const dynamicTemplateData = {
+        email: req.body.email,
+        type: req.body.type,
+        date: localDateStringToDDMMYYYY(req.body.slotBookingData.date),
+        program: req.body.slotBookingData.program,
+        timing: getTimingNoString(req.body.timingNo),
+        slotNo: Math.trunc(randomSlotNo / 10),
+      }
+      let receiversOfEmail = [req.body.email]
+      if (recorder != '') {
+        receiversOfEmail.push(recorder)
+      }
+      // await sendEmail(req, res, req.body.email, subject, bookingDoneTemplateId, dynamicTemplateData)
+      await sendTemplatedEmailSES(receiversOfEmail, 'studio-booking-confirmed-idol', dynamicTemplateData)
     }
-    let receiversOfEmail = [req.body.email]
-    if (recorder != '') {
-      receiversOfEmail.push(recorder)
-    }
-    // await sendEmail(req, res, req.body.email, subject, bookingDoneTemplateId, dynamicTemplateData)
-    await sendTemplatedEmailSES(receiversOfEmail, 'studio-booking-confirmed-idol', dynamicTemplateData)
-    const user = await User.findOne({ email: req.body.email })
-    const refreshToken = user.refreshTokenGoogle
-    const userfortoken = new UserRefreshClient(
-      process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET,
-      refreshToken,
-    );
-    const { credentials } = await userfortoken.refreshAccessToken(); // optain new tokens
-    const description = `You have a booking at Studio Number ${Math.trunc(randomSlotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${req.body.slotBookingData.program} and degree: ${req.body.slotBookingData.degree}. Please report 10 minutes before the slot time`
-    await createEvent(credentials?.refresh_token, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), req.body.email, description, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
-    //update new credentials for user
-    await User.findOneAndUpdate({ email: req.body.email }, {
-      access_token: credentials.access_token,
-      expiry_date: credentials.expiry_date,
-      id_token: credentials.id_token,
-      refreshTokenGoogle: credentials.refresh_token
-    })
-    if (recorder != '') {
-      const recorderUser = await User.findOne({ email: recorder })
-      const refreshTokenRecorder = recorderUser.refreshTokenGoogle
-      const userfortokenforrecorder = new UserRefreshClient(
-        process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET,
-        refreshTokenRecorder,
-      );
-      const { credentialsrecorder } = await userfortokenforrecorder.refreshAccessToken(); // optain new tokens
 
-      const descriptionRecorder = `You have a booking at Studio Number ${Math.trunc(randomSlotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${req.body.slotBookingData.program} and degree: ${req.body.slotBookingData.degree} from ${req.body.email}. Please report 10 minutes before the slot time`
-      await createEvent(credentialsrecorder.refresh_token, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), recorder, descriptionRecorder, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
+    //code from line 348 to line 384 have been commented to remove google create event feature
+    // const user = await User.findOne({ email: req.body.email })
+    // const refreshToken = user.refreshTokenGoogle
+    // const userfortoken = new UserRefreshClient(
+    //   process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET,
+    //   refreshToken,
+    // );
+    // const { credentials } = await userfortoken.refreshAccessToken(); // optain new tokens
+    // const description = `You have a booking at Studio Number ${Math.trunc(randomSlotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${req.body.slotBookingData.program} and degree: ${req.body.slotBookingData.degree}. Please report 10 minutes before the slot time`
+    // await createEvent(credentials?.refresh_token, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), req.body.email, description, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
+    // //update new credentials for user
+    // await User.findOneAndUpdate({ email: req.body.email }, {
+    //   access_token: credentials.access_token,
+    //   expiry_date: credentials.expiry_date,
+    //   id_token: credentials.id_token,
+    //   refreshTokenGoogle: credentials.refresh_token
+    // })
+    // if (recorder != '') {
+    //   const recorderUser = await User.findOne({ email: recorder })
+    //   const refreshTokenRecorder = recorderUser.refreshTokenGoogle
+    //   const userfortokenforrecorder = new UserRefreshClient(
+    //     process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET,
+    //     refreshTokenRecorder,
+    //   );
+    //   const { credentialsrecorder } = await userfortokenforrecorder.refreshAccessToken(); // optain new tokens
 
-      //update new credentials for user
-      await User.findOneAndUpdate({ email: recorder }, {
-        access_token: credentialsrecorder.access_token,
-        expiry_date: credentialsrecorder.expiry_date,
-        id_token: credentialsrecorder.id_token,
-        refreshTokenGoogle: credentialsrecorder.refresh_token
-      })
-    }
+    //   const descriptionRecorder = `You have a booking at Studio Number ${Math.trunc(randomSlotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${req.body.slotBookingData.program} and degree: ${req.body.slotBookingData.degree} from ${req.body.email}. Please report 10 minutes before the slot time`
+    //   await createEvent(credentialsrecorder.refresh_token, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), recorder, descriptionRecorder, randomSlotNo, Math.trunc(randomSlotNo / 10), req.body.type)
+
+    //   //update new credentials for user
+    //   await User.findOneAndUpdate({ email: recorder }, {
+    //     access_token: credentialsrecorder.access_token,
+    //     expiry_date: credentialsrecorder.expiry_date,
+    //     id_token: credentialsrecorder.id_token,
+    //     refreshTokenGoogle: credentialsrecorder.refresh_token
+    //   })
+    // }
     res.status(200).json(`booking has been made in studio ${Math.trunc(randomSlotNo / 10)} and slot ${randomSlotNo % 10}`)
   } catch (err) {
     res.status(401).json("there is error in backend code or postman query");
@@ -978,11 +982,11 @@ router.post("/admin", async (req, res, next) => {
       slotNo: Math.trunc(updatedSlot.slotNo / 10),
     }
     // await sendEmail(req, res, req.body.email, subject, bookingDoneTemplateId, dynamicTemplateData)
-    const user = await User.findOne({ email: req.body.email })
-    const refreshToken = user.refreshTokenGoogle
+    // const user = await User.findOne({ email: req.body.email })
+    // const refreshToken = user.refreshTokenGoogle
 
-    const description = `You have a booking at Studio Number ${Math.trunc(req.body.slotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.slotNo % 10)} for the program: ${req.body.slotBookingData.program}. Please report 10 minutes before the slot time`
-    await createEvent(refreshToken, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.slotNo % 10), getEndTimeFromTimingNo(req.body.slotNo % 10), req.body.email, description, req.body.slotNo, Math.trunc(req.body.slotNo / 10), updatedSlot.type)
+    // const description = `You have a booking at Studio Number ${Math.trunc(req.body.slotNo / 10)} on date: ${localDateStringToDDMMYYYY(req.body.slotBookingData.date)}, time: ${getTimingNoString(req.body.slotNo % 10)} for the program: ${req.body.slotBookingData.program}. Please report 10 minutes before the slot time`
+    // await createEvent(refreshToken, req.body.slotBookingData.date, getStartTimeFromTimingNo(req.body.slotNo % 10), getEndTimeFromTimingNo(req.body.slotNo % 10), req.body.email, description, req.body.slotNo, Math.trunc(req.body.slotNo / 10), updatedSlot.type)
     await sendTemplatedEmailSES(req.body.email, 'studio-booking-confirmed-idol', dynamicTemplateData)
     res.status(200).json({ msg: `booking has been made in studio ${Math.trunc(req.body.slotNo / 10)} and slot ${req.body.slotNo % 10}`, studio: Math.trunc(req.body.slotNo / 10), slot: (req.body.slotNo % 10), type: updatedSlot.type })
   } catch (err) {
@@ -1168,16 +1172,6 @@ router.post("/delete", async (req, res) => {
       }
       )
       // console.log(data)
-
-      // const dynamicTemplateDataTwo = {
-      //   email: data._doc.userEmail,
-      //   type: getStudioTypeFromStudioNo(req.body.studioNo),
-      //   date: localDateStringToDDMMYYYY(req.body.date),
-      //   program: data._doc.program,
-      //   timing: getTimingNoString(req.body.timingNo),
-      //   slotNo: req.body.studioNo,
-      //   reasonForCancel: req.body?.reasonForCancel
-      // }
       const dynamicTemplateDataTwo = {
         email: data._doc.userEmail,
         type: getStudioTypeFromStudioNo(req.body.studioNo),
@@ -1189,36 +1183,37 @@ router.post("/delete", async (req, res) => {
       let receiversOfEmail = [data._doc.userEmail]
       if (data._doc?.recorder != '') {
         receiversOfEmail.push(data._doc?.recorder)
-        const recorderFromDb = await User.findOne({ email: data._doc.recorder })
-        const refreshTokenRecorderQueue = recorderFromDb.refreshTokenGoogle
-        const descriptionReciever = `You have a booking at Studio Number ${req.body.studioNo} on date: ${localDateStringToDDMMYYYY(data._doc.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${data._doc.program} and degree: ${data._doc.degree} from ${data._doc.userEmail}. Please report 10 minutes before the slot time`
-        await createEvent(refreshTokenRecorderQueue, req.body.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), data._doc.recorder, descriptionReciever, req.body.slotNo, req.body.studioNo, getStudioTypeFromStudioNo(req.body.studioNo))
+        // const recorderFromDb = await User.findOne({ email: data._doc.recorder })
+        //const refreshTokenRecorderQueue = recorderFromDb.refreshTokenGoogle
+        //const descriptionReciever = `You have a booking at Studio Number ${req.body.studioNo} on date: ${localDateStringToDDMMYYYY(data._doc.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${data._doc.program} and degree: ${data._doc.degree} from ${data._doc.userEmail}. Please report 10 minutes before the slot time`
+        //await createEvent(refreshTokenRecorderQueue, req.body.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), data._doc.recorder, descriptionReciever, req.body.slotNo, req.body.studioNo, getStudioTypeFromStudioNo(req.body.studioNo))
       }
       // await sendEmail(req, res, data._doc.userEmail, 'Studio Booking Confirmed', bookingDoneTemplateId, dynamicTemplateDataTwo)
       await sendTemplatedEmailSES(receiversOfEmail, 'studio-booking-confirmed-idol', dynamicTemplateDataTwo)
-      const userQueue = await User.findOne({ email: data._doc.userEmail })
-      const refreshTokenUserQueue = userQueue.refreshTokenGoogle
-      const descriptionTwo = `You have a booking at Studio Number ${req.body.studioNo} on date: ${localDateStringToDDMMYYYY(req.body.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${data._doc.program}. Please report 10 minutes before the slot time`
-      await createEvent(refreshTokenUserQueue, req.body.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), data._doc.userEmail, descriptionTwo, req.body.slotNo, req.body.studioNo, getStudioTypeFromStudioNo(req.body.studioNo))
+      // const userQueue = await User.findOne({ email: data._doc.userEmail })
+      // const refreshTokenUserQueue = userQueue.refreshTokenGoogle
+      // const descriptionTwo = `You have a booking at Studio Number ${req.body.studioNo} on date: ${localDateStringToDDMMYYYY(req.body.date)}, time: ${getTimingNoString(req.body.timingNo)} for the program: ${data._doc.program}. Please report 10 minutes before the slot time`
+      // await createEvent(refreshTokenUserQueue, req.body.date, getStartTimeFromTimingNo(req.body.timingNo), getEndTimeFromTimingNo(req.body.timingNo), data._doc.userEmail, descriptionTwo, req.body.slotNo, req.body.studioNo, getStudioTypeFromStudioNo(req.body.studioNo))
     }
 
-    const refrestToken = await User.findOne({ email: slotData[0].slotBookingsData[0].userEmail }, { _id: 0, refreshTokenGoogle: 1 })
-    const eventId = await CalendarEvent.findOneAndDelete({ date: slotData[0].slotBookingsData[0].date, studioNo: req.body.studioNo, timingNo: req.body.timingNo, userEmail: slotData[0].slotBookingsData[0].userEmail })
+    // const refrestToken = await User.findOne({ email: slotData[0].slotBookingsData[0].userEmail }, { _id: 0, refreshTokenGoogle: 1 })
+    // const eventId = await CalendarEvent.findOneAndDelete({ date: slotData[0].slotBookingsData[0].date, studioNo: req.body.studioNo, timingNo: req.body.timingNo, userEmail: slotData[0].slotBookingsData[0].userEmail })
     // console.log(eventId)
     // console.log(slotDataqueue)
 
     let receiversOfEmail = [slotData[0].slotBookingsData[0].userEmail]
 
     //deleting event of deleted booking
-    await deleteEvent(refrestToken.refreshTokenGoogle, eventId.eventId)
+    // await deleteEvent(refrestToken.refreshTokenGoogle, eventId.eventId)
     //deleting event of recorder if recorder is there
-    console.log(slotData[0].slotBookingsData[0]?.recorder)
+    // console.log(slotData[0].slotBookingsData[0]?.recorder)
     if (slotData[0].slotBookingsData[0]?.recorder != undefined) {
       receiversOfEmail.push(slotData[0].slotBookingsData[0]?.recorder)
-      const recorderFromDb = await User.findOne({ email: slotData[0].slotBookingsData[0]?.recorder })
-      const refreshTokenRecorderQueue = recorderFromDb?.refreshTokenGoogle
-      const eventIdRecorder = await CalendarEvent.findOneAndDelete({ date: slotData[0].slotBookingsData[0]?.date, studioNo: req.body.studioNo, timingNo: req.body.timingNo, userEmail: slotData[0].slotBookingsData[0]?.recorder })
-      await deleteEvent(refreshTokenRecorderQueue, eventIdRecorder.eventId)
+      //lines from 1210 to 1214 is commented bcz we removed google calendar event creation
+      // const recorderFromDb = await User.findOne({ email: slotData[0].slotBookingsData[0]?.recorder })
+      // const refreshTokenRecorderQueue = recorderFromDb?.refreshTokenGoogle
+      // const eventIdRecorder = await CalendarEvent.findOneAndDelete({ date: slotData[0].slotBookingsData[0]?.date, studioNo: req.body.studioNo, timingNo: req.body.timingNo, userEmail: slotData[0].slotBookingsData[0]?.recorder })
+      // await deleteEvent(refreshTokenRecorderQueue, eventIdRecorder.eventId)
     }
 
 

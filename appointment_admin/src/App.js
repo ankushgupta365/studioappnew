@@ -17,6 +17,8 @@ import Privacy from "./pages/Privacy";
 import Cancelled from "./pages/Cancelled";
 import Waiting from "./pages/Waiting";
 import Holidays from "./pages/Holidays";
+import Forget from "./pages/Forget";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   const { user } = useContext(AuthContext)
@@ -26,6 +28,8 @@ function App() {
         <Route exact path="/" element={user?.isAdmin ? <Home /> : <Navigate to="/login" />} />
         <Route path="/login" element={user?.isAdmin ?<Home/>:<Login />} />
         <Route path="/register" element={user?.isAdmin ?<Home/>:<Register />} />
+        <Route path="/forget/password" element={user?.isAdmin ? <Home/>:<Forget/>}/>
+        <Route path="/reset/password/:email/:token" element={user?.isAdmin? <Home/>: <ResetPassword/>}/>
         <Route path="/users" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Users/>): <Navigate to="/login"/>}/>
         <Route path="/requests" element={user?.isAdmin ?(user?.role == 'pcs'?<Navigate to='/'/>:<Requests />): <Navigate to="/login"/>} />
         <Route path="/programs" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Programs/>): <Navigate to="/login"/>} />

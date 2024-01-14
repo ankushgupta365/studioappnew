@@ -13,32 +13,42 @@ const ColumnContainer = styled.div`
     flex-direction: column;
     justify-content: space-evenly;
 `
-const Column = ({ item, unavailableStudios,slotType }) => {
+const Column = ({ item, unavailableStudios }) => {
   const [studioUnavailable, setStudioUnavailable] = useState(false)
 
-  useEffect(() => {
-    if (unavailableStudios.length > 0 && item.type == 'numerical') {
-      setStudioUnavailable(!unavailableStudios.filter((i) => {
-        if (item.studioNo.includes(i._id)) {
+  // useEffect(() => {
+  //   if (unavailableStudios.length > 0 && item.type == 'numerical') {
+  //     setStudioUnavailable(!unavailableStudios.filter((i) => {
+  //       if (item.studioNo.includes(i._id)) {
+  //         return item
+  //       }
+  //     })[0]?.activeStatus)
+  //   } else if (unavailableStudios.length > 0 && item.type == 'theory') {
+  //    const noOfStudiosUnavailable= unavailableStudios.filter((i) => {
+  //       if (!i.activeStatus && item.studioNo.includes(i._id)) {
+  //         return item
+  //       }
+  //     })
+  //     if(noOfStudiosUnavailable.length === 3){
+  //       setStudioUnavailable(true)
+  //     }
+  //   }
+  // }, [unavailableStudios])
+
+  useEffect(()=>{
+    if(unavailableStudios.length >0){
+      setStudioUnavailable(!unavailableStudios.filter((i)=>{
+        if(i._id === item.number){
           return item
         }
-      })[0]?.activeStatus)
-    } else if (unavailableStudios.length > 0 && item.type == 'theory') {
-     const noOfStudiosUnavailable= unavailableStudios.filter((i) => {
-        if (!i.activeStatus && item.studioNo.includes(i._id)) {
-          return item
-        }
-      })
-      if(noOfStudiosUnavailable.length === 3){
-        setStudioUnavailable(true)
-      }
+      })[0].activeStatus)
     }
   }, [unavailableStudios])
 
   return (
     <ColumnContainer>
       {item.slots.map(slot => {
-        return <Box slot={slot} studioUnavailable={studioUnavailable} slotType={slotType}/>
+        return <Box slot={slot} studioUnavailable={studioUnavailable}  key={slot.id}/>
       })}
     </ColumnContainer>
   )

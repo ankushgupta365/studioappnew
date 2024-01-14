@@ -2,10 +2,9 @@ import styled from "styled-components"
 import { useState, useContext } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { AuthContext } from "../context/AuthContext"
-import axios from "axios"
-import { message} from "antd"
+import { message } from "antd"
 import { useGoogleLogin } from "@react-oauth/google"
-import {GoogleOutlined} from "@ant-design/icons"
+import { GoogleOutlined } from "@ant-design/icons"
 import { publicRequest } from "../requestMethods"
 
 const Container = styled.div`
@@ -76,8 +75,8 @@ margin: 20px;
 margin-bottom: 40px;
 `
 const Login = () => {
-    // const [email, setEmail] = useState("");
-    // const [password, setPassword] = useState("")
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("")
     const { loading, error, dispatch, user } = useContext(AuthContext);
     const [messageApi, contextHolder] = message.useMessage();
     const navigate = useNavigate()
@@ -91,6 +90,29 @@ const Login = () => {
             message.info('Only admin have access here', 2.5)
         }
     }
+    const handleLoginSimple = async (e) => {
+        e.preventDefault()
+        messageApi.destroy()
+        messageApi.open({
+            type: 'loading',
+            content: "Action in progress...",
+            duration: 0
+        })
+        dispatch({ type: "LOGIN_START" })
+        try {
+            const res = await publicRequest.post("/auth/login", { email, password })
+            messageApi.destroy()
+            dispatch({ type: "LOGIN_SUCCESS", payload: res.data })
+            checkAdmin(res.data)
+        } catch (error) {
+            messageApi.destroy()
+            dispatch({ type: "LOGIN_FAILURE", payload: error.response.data })
+            messageApi.open({
+                type: 'error',
+                content: `${error.response.data}`
+            })
+        }
+    }
     const handleLogin = async (code) => {
         messageApi.destroy()
         messageApi.open({
@@ -100,8 +122,9 @@ const Login = () => {
         });
         dispatch({ type: "LOGIN_START" });
         try {
-            const res = await publicRequest.post("/auth/google/login", { code:code });
+            const res = await publicRequest.post("/auth/google/login", { code: code });
             messageApi.destroy()
+            console.log(res.data)
             dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
             checkAdmin(res.data)
         } catch (err) {
@@ -124,24 +147,25 @@ const Login = () => {
         },
         scope: 'openid profile email https://www.googleapis.com/auth/calendar'
     })
+    console.log(user)
     return (
         <Container>
             {contextHolder}
             <Wrapper>
                 <Image src="https://www.cuchd.in/about/assets/images/cu-logo.png" />
-                {/* <Form>
-                    <Input value={email} placeholder="email" onChange={(e) => setEmail(e.target.value)} />
+                <Form>
+                    <Input value={email} placeholder="email" type="email" onChange={(e) => setEmail(e.target.value)} />
                     <Input value={password} placeholder="password" type="password" onChange={(e) => setPassword(e.target.value)} />
-                    <LoginButton onClick={handleLogin} disabled={loading}>Login</LoginButton>
-                    <Link>Forgot your password?</Link>
-                    {error && <Error>something went wrong...</Error>}
+                    <Button onClick={(e) => handleLoginSimple(e)} disabled={loading}>Login</Button>
+                    <Link to='/forget/password' style={{ textDecoration: "none" }}>
+                        <Text>
+                            Forgot your password?
+                        </Text>
+                    </Link>
                     <Link to="/register" style={{ textDecoration: "none" }} >
                         <Text>Create an Account</Text>
                     </Link>
-                </Form> */}
-                {/* <GoogleOutlined />
-                <LoginButton onClick={()=>googleLogintwo()} disabled={loading}>Sign in with google</LoginButton> */}
-                <Button onClick={() => googleLogintwo()} disabled={loading}><GoogleOutlined style={{marginRight: "5px", fontSize:"20px"}}/>Sign in with Google</Button>
+                </Form>
                 {error && <Error>something went wrong...</Error>}
             </Wrapper>
         </Container>

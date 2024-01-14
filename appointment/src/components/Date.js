@@ -18,7 +18,7 @@ const DatesPicker = ({ datePickerOpen, holidays }) => {
   const { dispatch, setDateString } = useContext(SlotStatusContext)
   const onChange = (date, dateString) => {
     setDateString(dateString)
-    // slotStatuses(dispatch, dateString)
+    slotStatuses(dispatch, dateString)
   };
   const customDatesToDisable = [
     '2023-11-10',

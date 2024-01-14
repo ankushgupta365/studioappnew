@@ -6,6 +6,8 @@ import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 import MyBookings from "./pages/MyBookings";
 import Privacy from "./pages/Privacy";
+import Forget from "./pages/Forget";
+import ResetPassword from "./pages/ResetPassword";
 function App() {
   const { user } = useContext(AuthContext)
   return (
@@ -15,6 +17,8 @@ function App() {
         <Route path="/bookings" element={user?<MyBookings/> : <Navigate to="/login"/>}/>
         <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forget/password" element={<Forget/>}/>
+        <Route path="/reset/password/:email/:token" element={<ResetPassword/>}/>
         <Route path="*" element={<Navigate to="/login"/>}/>
         <Route path="/privacy" element={<Privacy/>}/>
       </Routes>

@@ -20,19 +20,20 @@ const UserSchema = mongoose.Schema({
     refreshTokenGoogle: {type: String},
     access_token: {type: String},
     id_token: {type: String},
-    expiry_date: {type: Date}
+    expiry_date: {type: Date},
+    resetToken: {type: String}
 }, { timestamps: true });
 
 //midlleware before saving
-// UserSchema.pre('save', async function () {
-//     //generating random bytes 
-//     const salt = await bcrypt.genSalt(10)
-//     //referencing the password from the above schema and hashing it using bcrypt library
-//     this.password = await bcrypt.hash(this.password, salt)
-// })
+UserSchema.pre('save', async function () {
+    //generating random bytes 
+    const salt = await bcrypt.genSalt(10)
+    //referencing the password from the above schema and hashing it using bcrypt library
+    this.password = await bcrypt.hash(this.password, salt)
+})
 
 //midlleware before updating
-// UserSchema.pre('update', async function(next){
+// UserSchema.pre('findOneAndUpdate', async function(next){
 //     const password = this.getUpdate().$set.password;
 //     console.log(password)
 //         if (!password) {
@@ -50,7 +51,10 @@ const UserSchema = mongoose.Schema({
 
 //instance method, here this keyword signifies the instance of the calling object
 UserSchema.methods.comparePassword = async function (secondpartypassword) {
-    const isMatch = await bcrypt.compare(secondpartypassword, this.password)
+    let isMatch = false
+    if(this.password && secondpartypassword){
+        isMatch = await bcrypt.compare(secondpartypassword, this.password)
+    }
     return isMatch
 }
 module.exports = mongoose.model("User", UserSchema);

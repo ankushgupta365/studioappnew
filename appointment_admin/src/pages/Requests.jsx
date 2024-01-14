@@ -4,7 +4,7 @@ import styled from "styled-components";
 import Navbar from "../components/Navbar";
 import { userRequest } from "../requestMethods";
 import { DeleteOutlined, LoadingOutlined } from "@ant-design/icons";
-import { message, Result, Spin, Tooltip } from "antd";
+import { message, Modal, Result, Spin, Tooltip } from "antd";
 import ResponsivePagination from "react-responsive-pagination";
 import "react-responsive-pagination/themes/classic.css";
 import {
@@ -32,6 +32,14 @@ const MainContent = styled.div`
 const Pagination = styled.div`
   margin-top: 20px;
 `;
+const Label = styled.label`
+    
+`
+const Input = styled.input`
+    padding: 10px;
+    margin: 10px;
+    border-radius: 4px;
+`
 
 const Requests = () => {
   const [bookings, setBookings] = useState([]);
@@ -39,7 +47,24 @@ const Requests = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const {user}  = useContext(AuthContext)
+  const { user } = useContext(AuthContext);
+  const [open, setOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [reasonForCancel, setReasonForCancel] = useState("")
+  const [confirmLoading, setConfirmLoading] = useState(false)
+
+  const showModal = (booking) => {
+    setSelectedBooking(booking);
+    setOpen(true);
+  };
+  const handleOk = () => {
+    setConfirmLoading(true);
+    handleDelete(selectedBooking);
+  };
+  const handleCancel = () => {
+    setOpen(false);
+  };
+
   const handlePageChange = (page) => {
     console.log(page);
     setCurrentPage(page);
@@ -77,7 +102,7 @@ const Requests = () => {
       setTotalPages(res.data.totalPages);
     });
   }, []);
-  console.log(bookings);
+
   const handleDelete = async (booking) => {
     const { studioNo, timingNo, slotNo } = booking;
     const date = booking.slotBookingsData.date;
@@ -86,7 +111,8 @@ const Requests = () => {
         studioNo,
         timingNo,
         date,
-        slotNo
+        slotNo,
+        reasonForCancel
       });
     } catch (error) {
       return console.log(error);
@@ -109,6 +135,8 @@ const Requests = () => {
     getBookings().then((res) => {
       setBookings(res.data.bookings);
       setTotalPages(res.data.totalPages);
+      setOpen(false);
+      setConfirmLoading(false)
     });
 
     success();
@@ -166,6 +194,7 @@ const Requests = () => {
     // Return the date in DD/MM/YYYY format.
     return day + "/" + month + "/" + year;
   }
+  console.log(selectedBooking)
   return (
     <Container>
       {contextHolder}
@@ -175,78 +204,84 @@ const Requests = () => {
         <Spin indicator={antIcon} spinning={loading} size="large">
           {bookings && bookings.length > 0 ? (
             <MainContent>
-              <div style={{ maxHeightheight: "65vh"}} className="table-responsive d-flex m-auto mt-4">
-                  <table className="table text-center table-striped table-hover table-bordered">
-                    <tbody>
-                      <tr className="table-dark">
-                        <th>S.No</th>
-                        <th>Timing</th>
-                        <th>Studio No</th>
-                        <th>Slot No</th>
-                        <th>Date</th>
-                        <th>Course</th>
-                        <th>Program</th>
-                        <th>Sem</th>
-                        <th>Full Name</th>
-                        <th>Role</th>
-                        <th>Email</th>
-                        <th>Actions</th>
-                      </tr>
-                      {bookings &&
-                        bookings?.map((booking, index) => {
-                          return (
-                            <tr key={booking.slotBookingsData._id}>
-                              <td>{index + 1 + 10 * (currentPage - 1)}</td>
+              <div
+                style={{ maxHeightheight: "65vh" }}
+                className="table-responsive d-flex m-auto mt-4"
+              >
+                <table className="table text-center table-striped table-hover table-bordered">
+                  <tbody>
+                    <tr className="table-dark">
+                      <th>S.No</th>
+                      <th>Timing</th>
+                      <th>Studio No</th>
+                      <th>Slot No</th>
+                      <th>Date</th>
+                      <th>Course</th>
+                      <th>Program</th>
+                      <th>Sem</th>
+                      <th>Full Name</th>
+                      <th>Role</th>
+                      <th>Email</th>
+                      <th>Actions</th>
+                    </tr>
+                    {bookings &&
+                      bookings?.map((booking, index) => {
+                        return (
+                          <tr key={booking.slotBookingsData._id}>
+                            <td>{index + 1 + 10 * (currentPage - 1)}</td>
+                            <td>
+                              {getTimingStringFromTimingNoOfSlot(
+                                booking?.timingNo
+                              )}
+                            </td>
+                            <td>{booking.studioNo}</td>
+                            <td>{Math.trunc(booking.slotNo % 10)}</td>
+                            <td>
+                              {localDateStringToDDMMYYYY(
+                                booking.slotBookingsData.date
+                              )}
+                            </td>
+                            <Tooltip
+                              title={booking.slotBookingsData.program}
+                              color="grey"
+                              key={booking.slotBookingsData._id}
+                              placement="left"
+                            >
                               <td>
-                                {getTimingStringFromTimingNoOfSlot(
-                                  booking?.timingNo
-                                )}
+                                <span
+                                  className="d-inline-block text-truncate"
+                                  style={{ width: "200px" }}
+                                >
+                                  {booking.slotBookingsData.program}
+                                </span>
                               </td>
-                              <td>{booking.studioNo}</td>
-                              <td>{Math.trunc(booking.slotNo % 10)}</td>
-                              <td>
-                                {localDateStringToDDMMYYYY(
-                                  booking.slotBookingsData.date
-                                )}
-                              </td>
-                              <Tooltip
-                                title={booking.slotBookingsData.program}
-                                color="grey"
-                                key={booking.slotBookingsData._id}
-                                placement="left"
-                              >
-                                <td>
-                                  <span
-                                    className="d-inline-block text-truncate"
-                                    style={{ width: "200px" }}
-                                  >
-                                    {booking.slotBookingsData.program}
-                                  </span>
-                                </td>
-                              </Tooltip>
-                              <td>{booking?.slotBookingsData?.degree}</td>
-                              <td>{booking?.slotBookingsData?.semester}</td>
-                              <td>{`${booking.user_doc.name} ${booking.user_doc.lastname}`}</td>
-                              <td>{booking.user_doc.role}</td>
-                              <td>{booking.user_doc.email}</td>
-                              <td>
-                                {
-                                  !(user?.role == "recorder" || user?.role == "manager") && <Button onClick={() => handleDelete(booking)}>
-                                    <DeleteOutlined
-                                      style={{
-                                        color: "red",
-                                        fontSize: "18px",
-                                        margin: "2px",
-                                      }}
-                                    />
-                                  </Button>
-                                }
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
+                            </Tooltip>
+                            <td>{booking?.slotBookingsData?.degree}</td>
+                            <td>{booking?.slotBookingsData?.semester}</td>
+                            <td>{`${booking.user_doc.name} ${booking.user_doc.lastname}`}</td>
+                            <td>{booking.user_doc.role}</td>
+                            <td>{booking.user_doc.email}</td>
+                            <td>
+                              {!(
+                                user?.role == "recorder" ||
+                                user?.role == "manager"
+                              ) && (
+                                <Button onClick={() => showModal(booking)}>
+                                  <DeleteOutlined
+                                    style={{
+                                      color: "red",
+                                      fontSize: "18px",
+                                      margin: "2px",
+                                    }}
+                                  />
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
               </div>
               <Pagination>
                 <ResponsivePagination
@@ -255,6 +290,27 @@ const Requests = () => {
                   onPageChange={(page) => handlePageChange(page)}
                 />
               </Pagination>
+              <Modal
+                title="Reason for Delete"
+                open={open}
+                onOk={handleOk}
+                confirmLoading={confirmLoading}
+                onCancel={handleCancel}
+                okButtonProps={{
+                  disabled: reasonForCancel === "" ? true : false,
+                }}
+              >
+                <Label>
+                  Why are you cancelling this booking, please specify the reason
+                  below
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="enter the reason here"
+                  onChange={(e) => setReasonForCancel(e.target.value)}
+                  value={reasonForCancel}
+                />
+              </Modal>
             </MainContent>
           ) : (
             !loading && (

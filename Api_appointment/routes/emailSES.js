@@ -41,4 +41,19 @@ const sendTemplatedEmailSES = async (to,templateName,templateData) => {
     }
 }
 
-module.exports = sendTemplatedEmailSES
+const sendTemplatedEmailSESSingle = async(to, templateName, templateData) => {
+    let params = {
+        Destination: {ToAddresses: [to]},
+        TemplateData: JSON.stringify(templateData),
+        Source: process.env.AWS_SES_SENDER_STUDIO,
+        Template: templateName
+    }
+    try {
+        const sendTemplateEmailCommand = new SendTemplatedEmailCommand(params)
+        await sesClient.send(sendTemplateEmailCommand)
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+module.exports = {sendTemplatedEmailSES, sendTemplatedEmailSESSingle}

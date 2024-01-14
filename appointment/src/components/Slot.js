@@ -1,7 +1,7 @@
 
 import styled from 'styled-components'
 import Column from './Column'
-import { newData } from '../data'
+import { data, newData } from '../data'
 import { useReducer, useState } from 'react'
 import { publicRequest, userRequest } from '../requestMethods'
 import { useContext } from 'react'
@@ -23,14 +23,14 @@ const OuterContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 300px;
+    /* width: 300px; */
 `
 const Container = styled.div`
-    width: auto;
+    width: 48   vw;
     /* max-height: 60vh; */
     /* overflow-y: auto; */
-    /* margin: 10px; */
-    padding: 10px;  
+    /* margin: 20px; */
+    padding: 20px;  
     /* background-color: green; */
     background-color: #fff;
     display: flex;
@@ -45,7 +45,7 @@ const Container = styled.div`
 `
 const Studio = styled.div`
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     border-color: rgba(179,173,179,1);
     border-width: 1px;
@@ -58,6 +58,7 @@ const Name = styled.p`
     font-weight: bold;
     font-size: 18px;
     align-self: center;
+
     margin-top: 4px;
     margin-bottom: 0;
 `
@@ -100,14 +101,21 @@ const Option = styled.option`
     margin: 10px;
 
 `
-const Slot = ({ setDatePickerOpen, slotType }) => {
+const getStudioTypeFromStudioNo = (studioNo) => {
+    if (studioNo == 4) {
+        return 'numerical'
+    } else {
+        return 'theory'
+    }
+}
+const Slot = ({ setDatePickerOpen }) => {
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const { activeIds, dateString, unCheckSlotActive, dispatch, loading, timingNo } = useContext(SlotStatusContext)
+    const { activeId, dateString, unCheckSlotActive, dispatch, loading, timingNo } = useContext(SlotStatusContext)
     const [program, setProgram] = useState("")
     const [programs, setPrograms] = useState([])
     const [semester, setSemester] = useState(SEMESTERS[0])
     const [programName, setProgramName] = useState(PROGRAMNAMES[0])
-    const [programObjectSelected,setProgramObjectSelected]  = useState({})
+    const [programObjectSelected, setProgramObjectSelected] = useState({})
     const [state, dispatchA] = useReducer(bookingReducer, INITIAL_STATE_SLOT_REDUCER)
     const { user } = useContext(AuthContext)
     const [messageApi, contextHolder] = message.useMessage();
@@ -118,14 +126,14 @@ const Slot = ({ setDatePickerOpen, slotType }) => {
         'token': `Bearer ${user?.accestoken}`
     }
     const handleBook = () => {
-        if (activeIds.length > 0) {
+        if (activeId != null) {
             setDatePickerOpen(false)
             setIsModalOpen(true)
         } else {
             warning()
         }
     }
-    console.log(activeIds)
+    console.log(timingNo)
     const handleCancel = () => {
         setDatePickerOpen(true)
         setIsModalOpen(false)
@@ -137,7 +145,9 @@ const Slot = ({ setDatePickerOpen, slotType }) => {
         dispatchA({ type: ACTION_TYPE.BOOKING_START })
         try {
             await publicRequest.post("/booking", {
-                type: slotType,
+                type: getStudioTypeFromStudioNo(Math.floor(activeId / 10)),
+                slotNo: activeId,
+                bookingFrom: 'admin',
                 timingNo,
                 email: user.email,
                 slotBookingData: {
@@ -155,7 +165,7 @@ const Slot = ({ setDatePickerOpen, slotType }) => {
             dispatchA({ type: ACTION_TYPE.BOOKING_SUCCESS })
             unCheckSlotActive()
             // slotStatuses(dispatch, dateString)
-            slotStatusesWithType(dispatch, dateString, slotType, header)
+            slotStatuses(dispatch, dateString, header)
             success()
         } catch (err) {
             dispatchA({ type: ACTION_TYPE.BOOKING_FAIL })
@@ -202,25 +212,25 @@ const Slot = ({ setDatePickerOpen, slotType }) => {
             spin
         />
     );
-    useEffect(() => {
-        if (slotType === "" && dateString == null) {
-            console.log("slotType:", slotType, " dateString:", dateString)
-            setShowSlots(false)
-        } else if (slotType !== "" && dateString !== null) {
-            slotStatusesWithType(dispatch, dateString, slotType, header)
-            setShowSlots(true)
-        }
-    }, [slotType, dateString])
+    // useEffect(() => {
+    //     if (slotType === "" && dateString == null) {
+    //         // console.log("slotType:", slotType, " dateString:", dateString)
+    //         // setShowSlots(false)
+    //     } else if (dateString !== null) {
+    //         slotStatuses(dispatch, dateString, header)
+    //         setShowSlots(true)
+    //     }
+    // }, [ dateString])
 
-    useEffect(()=>{
+    useEffect(() => {
         const elevenMinutes = 11 * 60 * 60  //10 minutes in ms which is buffer
         let currDateTime = new Date().getTime() - elevenMinutes
-        if (getStartTimeFromTimingNoForDisabling(timingNo, dateString)<currDateTime){
+        if (getStartTimeFromTimingNoForDisabling(timingNo, dateString) < currDateTime) {
             setShowButton(false)
-        }else{
+        } else {
             setShowButton(true)
         }
-    },[slotType, dateString, timingNo])
+    }, [dateString, timingNo, activeId])
 
     const getProgramList = async () => {
         try {
@@ -245,53 +255,57 @@ const Slot = ({ setDatePickerOpen, slotType }) => {
 
     return (<OuterContainer>
         {contextHolder}
-        {showSlots == false ? <TakeAction /> : <>
-            <Container>
-                <Spin indicator={antIcon} spinning={state.posting || loading} size='small'>
-                    <Studio>
-                        <Name>Studio</Name>
-                    </Studio>
-                    <Slots>
-                        {newData.map((item) => {
-                            return item.type === slotType && <Column item={item} unavailableStudios={unavailableStudios} slotType={slotType} />
-                        })}
-                    </Slots>
-                </Spin>
-            </Container>
-            {showButton == true?<Button onClick={handleBook} disableJi={state.posting || loading || (activeIds.length == 0)}>Book Now</Button>:<span className='text-danger p-2'>*Invalid time*</span>}
-            <Modal title={`You are booking ${slotType} slot`} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okButtonProps={{ disabled: program === '' ? true : false }}>
-                <Title>Select the program</Title>
-                <Form>
-                    {/* <Input placeholder="eg: MBA" onChange={(e) => setProgram(e.target.value)} /> */}
-                    <Select name="semester" value={semester} onChange={(e) => setSemester(SEMESTERS[e.target.options.selectedIndex])}>
-                        {
-                            SEMESTERS && SEMESTERS.map((item, index) => (
-                                <Option value={item} key={index}>{item}</Option>
-                            ))
-                        }
-                    </Select>
-                    <Select name="programName" value={programName} onChange={(e) => setProgramName(PROGRAMNAMES[e.target.options.selectedIndex])}>
-                        {
-                            PROGRAMNAMES && PROGRAMNAMES.map((item, index) => (
-                                <Option value={item} key={index}>{item}</Option>
-                            ))
-                        }
-                    </Select>
-                    <Select name="programs" value={program} defaultValue={programs[0]?.courseName} onChange={(e) => { setProgram(programs[e.target.options.selectedIndex]?.courseName)
-                                                                                                                      setProgramObjectSelected (programs[e.target.options.selectedIndex])}}>
-                        {
-                            programs && programs.map((item) => (
-                                <Option value={item?.courseName} key={item._id} >{item?.courseName}</Option>
-                            ))
-                        }
-                    </Select>
-                    {program === '' ? <div style={{ marginLeft: '10px' }}>
-                        <span style={{ color: 'red' }}>*Please select a program*</span>
-                    </div>: ''}
-                </Form>
-            </Modal>
+        <Container>
+            <Spin indicator={antIcon} spinning={state.posting || loading} size='small'>
+                <Studio>
+                    <Name>Studio 1</Name>
+                    <Name>Studio 2</Name>
+                    <Name>Studio 3</Name>
+                    <Name>Studio 4</Name>
+                </Studio>
+                <Slots>
+                    {data.map((item) => {
+                        return <Column item={item} unavailableStudios={unavailableStudios} key={item.idx} />
+                    })}
+                </Slots>
+            </Spin>
+        </Container>
+        {showButton == true ? <Button onClick={handleBook} disableJi={state.posting || loading || (activeId == null)}>Book Now</Button> : <span className='text-danger p-2'>*Invalid time*</span>}
+        <Modal title={`You are booking ${activeId} slot`} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okButtonProps={{ disabled: program === '' ? true : false }}>
+            <Title>Select the program</Title>
+            <Form>
+                {/* <Input placeholder="eg: MBA" onChange={(e) => setProgram(e.target.value)} /> */}
+                <Select name="semester" value={semester} onChange={(e) => setSemester(SEMESTERS[e.target.options.selectedIndex])}>
+                    {
+                        SEMESTERS && SEMESTERS.map((item, index) => (
+                            <Option value={item} key={index}>{item}</Option>
+                        ))
+                    }
+                </Select>
+                <Select name="programName" value={programName} onChange={(e) => setProgramName(PROGRAMNAMES[e.target.options.selectedIndex])}>
+                    {
+                        PROGRAMNAMES && PROGRAMNAMES.map((item, index) => (
+                            <Option value={item} key={index}>{item}</Option>
+                        ))
+                    }
+                </Select>
+                <Select name="programs" value={program} defaultValue={programs[0]?.courseName} onChange={(e) => {
+                    setProgram(programs[e.target.options.selectedIndex]?.courseName)
+                    setProgramObjectSelected(programs[e.target.options.selectedIndex])
+                }}>
+                    {
+                        programs && programs.map((item) => (
+                            <Option value={item?.courseName} key={item._id} >{item?.courseName}</Option>
+                        ))
+                    }
+                </Select>
+                {program === '' ? <div style={{ marginLeft: '10px' }}>
+                    <span style={{ color: 'red' }}>*Please select a program*</span>
+                </div> : ''}
+            </Form>
+        </Modal>
 
-        </>}
+
     </OuterContainer>
     )
 }

@@ -3,13 +3,14 @@ const { UserRefreshClient } = require('google-auth-library');
 const { verifyGoogle, oAuth2Client } = require('../middleware/verifyGoogle');
 const User = require('../models/User')
 const jwt = require('jsonwebtoken');
-const { google } = require('googleapis')
+const crypto = require('crypto');
+const { google } = require('googleapis');
+const { sendTemplatedEmailSESSingle } = require('./emailSES');
 
 const REFRESH_TOKEN = "1//0gHEOUBxLowZcCgYIARAAGBASNwF-L9IrBU9BNiIs3QHHgFsxNB9_ib1aaZ7MO1hZeUgQso0Gr01onrce5lue61LVoNq-IyHGKew"
 //Register
 router.post("/register", async (req, res) => {
     const newUser = new User({
-        username: req.body.username,
         email: req.body.email,
         password: req.body.password,
         lastname: req.body.lastname,
@@ -39,7 +40,7 @@ router.post("/login", async (req, res) => {
 
         //if user does not exist
         if (!user) {
-            return res.status(401).json("Wrong credentials");
+            return res.status(401).json("User not exist");
         }
         //calling insatance method to comparehashed password
         const isMatch = await user.comparePassword(req.body.password);
@@ -54,8 +55,68 @@ router.post("/login", async (req, res) => {
         const { password, ...others } = user._doc;
         res.status(201).json({ ...others, accestoken });
     } catch (error) {
-        res.status(500).json(error.message);
+        res.status(500).json("try again later");
         console.log(error)
+    }
+})
+
+//forget password: to send token and save it in db
+router.post("/forget", async(req,res)=>{
+    try {
+        const user = await User.findOne({email: req.body.email})
+        if(!user){
+            return res.status(401).json("Email does not exist")
+        }
+        // Generate a random token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+
+        //store in db for future verification
+        await User.findOneAndUpdate({email: req.body.email}, {
+            resetToken: resetToken
+        })
+        const origin = req.get('Origin');
+        let resetURL = `${origin}/reset/password/${req.body.email}/${resetToken}`
+        const dynamicTemplateData = {
+            email: req.body.email,
+            resetURL: resetURL
+          }
+
+        //now send email using AWS SES 
+        await sendTemplatedEmailSESSingle(req.body.email,'studio-forget-password', dynamicTemplateData)
+
+        res.status(201).json({msg: "Reset link sent on email succesfully"})
+        
+    } catch (error) {
+        res.status(401).json({msg: error.message})
+    }
+})
+
+//verify reset token
+router.post("/verify/reset", async(req,res)=>{
+    try {
+        const user = await User.findOne({email: req.body.email})
+        if(!user){
+            return res.status(401).json("Email does not exist")
+        }
+        if(user.resetToken === req.body.resetToken){
+            return res.status(201).json({msg: "Token Verified", verified: true})
+        }
+        res.status(401).json({msg: "Token does not match"})
+    } catch (error) {
+        res.status(401).json({msg: error.message})
+    }
+})
+
+
+//reset password: last step in auth
+router.post("/reset", async(req,res)=>{
+    try {
+        const user = await User.findOne({email: req.body.email})
+        user.password = req.body.password
+        await user.save()
+        res.status(201).json({msg: "password updated"})
+    } catch (error) {
+        res.status(401).json({msg: error.message})
     }
 })
 
