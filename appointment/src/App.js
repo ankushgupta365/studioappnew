@@ -17,10 +17,10 @@ function App() {
         <Route path="/bookings" element={user?<MyBookings/> : <Navigate to="/login"/>}/>
         <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/forget/password" element={<Forget/>}/>
-        <Route path="/reset/password/:email/:token" element={<ResetPassword/>}/>
-        <Route path="*" element={<Navigate to="/login"/>}/>
+        <Route path="/forget" element={<Forget/>}/>
+        <Route path="/reset-password-protected" element={<ResetPassword/>}/>
         <Route path="/privacy" element={<Privacy/>}/>
+        <Route path="*" element={<Navigate to="/login"/>}/>
       </Routes>
     </BrowserRouter>
   );

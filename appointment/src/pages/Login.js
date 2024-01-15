@@ -138,7 +138,7 @@ const Login = () => {
                     <Input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
                     <Input placeholder="password" type="password" onChange={(e) => setPassword(e.target.value)} />
                     <Button onClick={(e)=>handleLoginSimple(e)} disabled={loading}>Login</Button>
-                    <Link to="/forget/password">
+                    <Link to="/forget">
                         <Text>
                             Forget Password?
                         </Text>

@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { google } = require('googleapis');
 const { sendTemplatedEmailSESSingle } = require('./emailSES');
+const otpGenerator = require('otp-generator');
 
 const REFRESH_TOKEN = "1//0gHEOUBxLowZcCgYIARAAGBASNwF-L9IrBU9BNiIs3QHHgFsxNB9_ib1aaZ7MO1hZeUgQso0Gr01onrce5lue61LVoNq-IyHGKew"
 //Register
@@ -67,22 +68,23 @@ router.post("/forget", async(req,res)=>{
         if(!user){
             return res.status(401).json("Email does not exist")
         }
-        // Generate a random token
-        const resetToken = crypto.randomBytes(20).toString('hex');
+        
+
+        // Generate a 6-digit OTP
+        const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false })
 
         //store in db for future verification
         await User.findOneAndUpdate({email: req.body.email}, {
-            resetToken: resetToken
+            resetToken: otp
         })
-        const origin = req.get('Origin');
-        let resetURL = `${origin}/reset/password/${req.body.email}/${resetToken}`
+        
         const dynamicTemplateData = {
             email: req.body.email,
-            resetURL: resetURL
+            resetURL: otp
           }
 
         //now send email using AWS SES 
-        await sendTemplatedEmailSESSingle(req.body.email,'studio-forget-password', dynamicTemplateData)
+        await sendTemplatedEmailSESSingle(req.body.email,'studio-forget-password-new', dynamicTemplateData)
 
         res.status(201).json({msg: "Reset link sent on email succesfully"})
         
@@ -99,9 +101,12 @@ router.post("/verify/reset", async(req,res)=>{
             return res.status(401).json("Email does not exist")
         }
         if(user.resetToken === req.body.resetToken){
+            await User.findOneAndUpdate({email: req.body.email}, {
+                resetToken: ""
+            })
             return res.status(201).json({msg: "Token Verified", verified: true})
         }
-        res.status(401).json({msg: "Token does not match"})
+        res.status(401).json({msg: "Otp does not match"})
     } catch (error) {
         res.status(401).json({msg: error.message})
     }

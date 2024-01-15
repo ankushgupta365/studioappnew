@@ -28,8 +28,8 @@ function App() {
         <Route exact path="/" element={user?.isAdmin ? <Home /> : <Navigate to="/login" />} />
         <Route path="/login" element={user?.isAdmin ?<Home/>:<Login />} />
         <Route path="/register" element={user?.isAdmin ?<Home/>:<Register />} />
-        <Route path="/forget/password" element={user?.isAdmin ? <Home/>:<Forget/>}/>
-        <Route path="/reset/password/:email/:token" element={user?.isAdmin? <Home/>: <ResetPassword/>}/>
+        <Route path="/forget" element={user?.isAdmin ? <Home/>:<Forget/>}/>
+        <Route path="/reset-password-protected" element={user?.isAdmin? <Home/>: <ResetPassword/>}/>
         <Route path="/users" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Users/>): <Navigate to="/login"/>}/>
         <Route path="/requests" element={user?.isAdmin ?(user?.role == 'pcs'?<Navigate to='/'/>:<Requests />): <Navigate to="/login"/>} />
         <Route path="/programs" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Programs/>): <Navigate to="/login"/>} />
@@ -39,6 +39,7 @@ function App() {
         <Route path="/holidays" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Holidays/>): <Navigate to="/login"/>}/>
         <Route path="/manage" element={user?.isAdmin ? (user?.role == "pcs"? <Navigate to="/"/>: <Manage/>): <Navigate to="/login"/>} />
         <Route path="/privacy" element={<Privacy/>} />
+        <Route path="*" element={<Navigate to="/login"/>}/>
       </Routes>
     </BrowserRouter>
   );

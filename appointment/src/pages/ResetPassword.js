@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import styled from "styled-components"
 import { publicRequest } from "../requestMethods"
 import { useEffect } from "react"
@@ -59,8 +59,10 @@ const Text = styled.p`
    cursor: pointer;
 `
 const ResetPassword = () => {
-    const { email, token } = useParams();
     const [isValidToken, setIsValidToken] = useState(false);
+    const [error, setError] = useState("")
+    const location = useLocation();
+    const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false)
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -75,65 +77,78 @@ const ResetPassword = () => {
 
     const verifyToken = async () => {
         try {
+            setError("")
             setLoading(true)
-            console.log(email, token)
-            const res = await publicRequest.post("/auth/verify/reset", { email: email, resetToken: token })
+            const res = await publicRequest.post("/auth/verify/reset", { email: location.state.email, resetToken: otp })
             if (res.data.verified === true) {
                 setIsValidToken(true)
                 setLoading(false)
             }
         } catch (error) {
-            console.log(error.message)
+            setError("Otp does not match")
             setLoading(false)
         }
     }
-
-    useEffect(() => {
-        // Send a request to the server to validate the token
-        // Use the 'token' variable from the params
-        // Set isValidToken based on the server response
-        verifyToken()
-    }, [token, email]);
+    const handleOtpChange = (e) => {
+        setOtp(e.target.value);
+    };
 
     const SubmitPassword = async (e) => {
-        // Send a request to the server to update the password
-        // Use the 'token' variable from the params and 'newPassword' state
-        // You might want to include error handling here
         e.preventDefault()
         if (password === confirmPassword) {
             setLoading(true)
-            const res = await publicRequest.post("/auth/reset", { password: password, email: email })
+            const res = await publicRequest.post("/auth/reset", { password: password, email: location.state.email })
             setLoading(false)
             // After successfully changing the password, redirect the user
             navigate("/login")
         } else {
-            console.log("confirm does not match")
             alert("Confirm password does not match")
             setLoading(false)
         }
     };
 
-    if (loading) {
-        return <div>Loading...</div>;
+    const resendOtp = async (e) => {
+        e.preventDefault()
+        setLoading(true)
+        try {
+            await publicRequest.post("/auth/forget", { email: location.state.email })
+            alert("OTP succesfully sent")
+            setLoading(false)
+        } catch (error) {
+            console.log(error)
+            setLoading(false)
+        }
     }
-    if (!isValidToken) {
-        return <div>Token not verified</div>
-    }
+
+
+
     return (
         <Container>
             <Wrapper>
-                <Title>Create New Password</Title>
-                <Form>
-                    <Input placeholder="new password" type="password" id="password" value={password} onChange={(e) => handlePasswordChange(e)} />
-                    <Input placeholder="confirm new password" type="password" id="confirmpassword" value={confirmPassword} onChange={(e) => handleConfirmPasswordChange(e)} />
-                    <Agreement>
-                        After succesfully changing password you will be routed to the login page.
-                    </Agreement>
-                    <Button onClick={(e) => SubmitPassword(e)} type="submit">Update Password</Button>
-                </Form>
-                <Link to="/login" style={{ textDecoration: "none", marginTop: "6px", display: "block" }} >
-                    <Text>Login</Text>
-                </Link>
+                {!isValidToken ? (
+                    <div className="d-flex flex-column justify-content-center align-items-center">
+                        <label className="m-1">Enter OTP:</label>
+                        <input type="text" value={otp} onChange={handleOtpChange} className="w-50" />
+                        <button onClick={verifyToken} className="btn btn-primary mt-3    w-50">Verify OTP</button>
+                        {error != "" ? <span className="text-danger">*{error}</span> : null}
+                        <button onClick={resendOtp} className="btn btn-link">Resend OTP</button>
+                    </div>
+                ) : <>
+                    <Title>Create New Password</Title>
+                    <span className="text-danger">*Do not refresh the page, before changing the password</span>
+                    <Form>
+                        <Input placeholder="new password" type="password" id="password" value={password} onChange={(e) => handlePasswordChange(e)} />
+                        <Input placeholder="confirm new password" type="password" id="confirmpassword" value={confirmPassword} onChange={(e) => handleConfirmPasswordChange(e)} />
+                        <Agreement>
+                            After succesfully changing password you will be routed to the login page.
+                        </Agreement>
+                        <Button onClick={(e) => SubmitPassword(e)} type="submit">Update Password</Button>
+                    </Form>
+                    <Link to="/login" style={{ textDecoration: "none", marginTop: "6px", display: "block" }} >
+                        <Text>Login</Text>
+                    </Link>
+                </>
+                }
             </Wrapper>
         </Container>
     )

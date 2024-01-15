@@ -59,6 +59,7 @@ const Text = styled.p`
 const Forget = () => {
   const [email, setEmail] = useState("")
   const [loading,setLoading] = useState(false)
+  const navigate = useNavigate()
   const handleChange = (e)=>{
     setEmail(e.target.value);
   }
@@ -69,6 +70,7 @@ const Forget = () => {
       await publicRequest.post("/auth/forget",{email})
       setEmail("")
       alert("Password reset link will be sent on to your email, if it is registered")
+      navigate("/reset-password-protected", {state: {email: email}})
       setLoading(false)
     } catch (error) {
       console.log(error)
