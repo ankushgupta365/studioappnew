@@ -127,7 +127,7 @@ router.get("/", async (req, res) => {
 
 router.get("/booking", async(req,res)=>{
     try {
-        let users = await User.find({role: "teacher", status: "approved"}).sort({email: 1})
+        let users = await User.find({role: {$in: ["teacher", "pcs"]}, status: "approved"}).sort({email: 1})
         res.status(200).json({count: users.length,teachers: users})
     } catch (error) {
         res.status(500).json(error.message)

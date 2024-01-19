@@ -9,6 +9,9 @@ const slotRoute = require('./routes/booking')
 const createStudioRoute = require('./routes/studio')
 const programRoute = require('./routes/programRoute.js')
 const datesMapRoute = require("./routes/datesMap.js")
+const path = require('path')
+app.use("/upload", express.static(path.join(__dirname, "public/uploads")));
+
 mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URL)
         .then(()=>{console.log("DB connection Successfull")})

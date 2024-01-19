@@ -264,7 +264,8 @@ const Requests = () => {
                             <td>
                               {!(
                                 user?.role == "recorder" ||
-                                user?.role == "manager"
+                                user?.role == "manager"  || 
+                                user?.role == "pcs"
                               ) && (
                                 <Button onClick={() => showModal(booking)}>
                                   <DeleteOutlined

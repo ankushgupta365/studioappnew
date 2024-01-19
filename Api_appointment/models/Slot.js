@@ -19,7 +19,8 @@ const SlotSchema = mongoose.Schema({
         reasonForDefault: {type: String},
         reasonForCompleted: {type: String},
         reasonForCancel: {type: String},
-        recorder: {type: String}
+        recorder: {type: String},
+        bookingByEmail: {type: String}
     }],
     queueData:{
         slotBookingsData: [
@@ -38,7 +39,8 @@ const SlotSchema = mongoose.Schema({
                 reasonForDefault: {type:String},
                 reasonForCompleted: {type: String},
                 reasonForCancel: {type: String},
-                recorder: {type: String}
+                recorder: {type: String},
+                bookingByEmail: {type: String}
             }
         ],
     },
@@ -58,7 +60,8 @@ const SlotSchema = mongoose.Schema({
             reasonForDefault: {type: String},
             reasonForCompleted: {type: String},
             reasonForCancel: {type: String},
-            recorder: {type: String}
+            recorder: {type: String},
+            bookingByEmail: {type: String}
         }]
     },
     active: {type: Boolean, default: true},

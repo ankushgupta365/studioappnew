@@ -10,6 +10,7 @@ const { google } = require('googleapis');
 const CalendarEvent = require('../models/CalendarEvent');
 const excelJs = require('exceljs');
 const { UserRefreshClient } = require('google-auth-library');
+const multer = require("multer");
 const bookingDoneTemplateId = process.env.BOOKINGDONEEMAILTEMPLATE
 const deleteDoneTemplateId = process.env.DELETEDONEEMAILTEMPLATE
 const waitingDoneTemplateId = process.env.WAITINGDONEEMAILTEMPLATE
@@ -1703,6 +1704,51 @@ router.post("/temp/create/booking", async(req,res)=>{
     res.status(201).json({msg: "done"})
   } catch (error) {
     res.status(401).json({msg: error.message})
+  }
+})
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+      cb(null, './public/uploads')
+  },
+  filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now()
+      cb(null, uniqueSuffix + '-' +file.originalname)
+  }
+})
+
+const upload = multer({ storage: storage })
+
+const helperBulkBookingExcel = async(props)=>{
+  try {
+    
+  } catch (error) {
+    
+  }
+}
+
+router.post("/bulk/excel", upload.single('uploadField'), async (req,res)=>{
+  try {
+    const file = req.file
+        if (!file) {
+            throw new Error('Please upload a file')
+        }
+        const jsonArrayData = await csv().fromFile(req.file.path)
+        //main logic
+        async function createBookingForBulkInBlockingWay() {
+          for (let i = 0; i < jsonArrayData.length; i = i + 50) {
+              const tempSenders = jsonArrayData.slice(i, i+50)
+              await helperBulkBookingExcel(tempSenders, req.body.type)
+              await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+      }
+      await createBookingForBulkInBlockingWay()
+        fs.unlink(req.file.path, (err) => {
+            if (err) throw err;
+        })
+        res.status(201).json({ msg: "All bookings done successfully" })
+  } catch (error) {
+    res.status(400).json({ msg: error.message })
   }
 })
 

@@ -68,7 +68,7 @@ const Sidebar = () => {
             </Link>
           </ListItem>
         )}
-        {user?.role == "pcs" ? null : (
+        {user?.role == "recorder" ? null : (
           <ListItem
             selected={location.pathname == "/requests"}
             value="/requests"
@@ -112,10 +112,10 @@ const Sidebar = () => {
           </ListItem>
         )}
 
-        {user?.role == "pcs" ? null : (
+        {user?.role == "recorder" ? null : (
           <ListItem
             selected={location.pathname == "/manage"}
-            value="/configure"
+            value="/manage"
             special={true}
           >
             <Link
@@ -167,6 +167,22 @@ const Sidebar = () => {
                 style={{ textDecoration: "none", color: "inherit" }}
               >
                 Holidays
+              </Link>
+            </ListItem>
+        )}
+        {user?.role == "recorder" ||
+        user?.role == "manager" ||
+        user?.role == "pcs" ? null : (
+          
+            <ListItem
+              selected={location.pathname == "/bulk"}
+              value="/bulk"
+            >
+              <Link
+                to="/bulk"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                Bulk
               </Link>
             </ListItem>
         )}

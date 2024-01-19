@@ -19,6 +19,7 @@ import Waiting from "./pages/Waiting";
 import Holidays from "./pages/Holidays";
 import Forget from "./pages/Forget";
 import ResetPassword from "./pages/ResetPassword";
+import Bulk from "./pages/Bulk";
 
 function App() {
   const { user } = useContext(AuthContext)
@@ -31,13 +32,14 @@ function App() {
         <Route path="/forget" element={user?.isAdmin ? <Home/>:<Forget/>}/>
         <Route path="/reset-password-protected" element={user?.isAdmin? <Home/>: <ResetPassword/>}/>
         <Route path="/users" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Users/>): <Navigate to="/login"/>}/>
-        <Route path="/requests" element={user?.isAdmin ?(user?.role == 'pcs'?<Navigate to='/'/>:<Requests />): <Navigate to="/login"/>} />
+        <Route path="/requests" element={user?.isAdmin ?<Requests />: <Navigate to="/login"/>} />
         <Route path="/programs" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Programs/>): <Navigate to="/login"/>} />
         <Route path="/configure" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <StudioConfigure/>): <Navigate to="/login"/>} />
         <Route path="/cancelled" element={user?.isAdmin ?(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Cancelled/>): <Navigate to="/login"/>} />
         <Route path="/waiting" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Waiting/>): <Navigate to="/login"/>}/>
         <Route path="/holidays" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Holidays/>): <Navigate to="/login"/>}/>
-        <Route path="/manage" element={user?.isAdmin ? (user?.role == "pcs"? <Navigate to="/"/>: <Manage/>): <Navigate to="/login"/>} />
+        <Route path="/manage" element={user?.isAdmin ? <Manage/>: <Navigate to="/login"/>} />
+        <Route path="/bulk" element={user?.isAdmin ? (user?.role == "pcs"? <Navigate to="/"/>: <Bulk/>): <Navigate to="/login"/>} />
         <Route path="/privacy" element={<Privacy/>} />
         <Route path="*" element={<Navigate to="/login"/>}/>
       </Routes>

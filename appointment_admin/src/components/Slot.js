@@ -200,7 +200,6 @@ const Slot = ({ setDatePickerOpen }) => {
             setIsLoading(true);
             try {
                 const res = await publicRequest.get('/user/booking');
-                console.log(res.data);
                 setAllTeachers(res.data?.teachers);
             } catch (e) {
                 console.log(e);
@@ -299,12 +298,13 @@ const Slot = ({ setDatePickerOpen }) => {
                     semester: semester,
                     degree: programName,
                     date: dateString,
-                    userEmail: selectedTeacher?.email
+                    userEmail: selectedTeacher?.email,
+                    bookingByEmail: user?.email
                 },
                 programObject: programObjectSelected,
                 bookingFrom: "admin",
                 slotNo: activeId,
-                bookingIn: getBookingInType(showButton)
+                bookingIn: getBookingInType(showButton),
             }, {
                 headers: header
             })
@@ -487,7 +487,7 @@ const Slot = ({ setDatePickerOpen }) => {
                 </Slots>
             </Spin>
         </Container>
-        {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && showButton && !fullSlot && <Button onClick={handleBook} disable={state.posting || loading}>Book Now</Button>}
+        {!(user?.role == "recorder" || user?.role == "manager") && showButton && !fullSlot && <Button onClick={handleBook} disable={state.posting || loading}>Book Now</Button>}
         {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && fullSlot && showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book Full Slot</Button>}
         {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && !showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book for Past</Button>}
         <Modal title='Select Type' open={isModalOpenType} onOk={handleOkType} onCancel={handleCancelType} okButtonProps={{
@@ -499,11 +499,13 @@ const Slot = ({ setDatePickerOpen }) => {
                         Book For Teacher
                     </p>
                 </BoxContainer>
-                <BoxContainer onClick={() => handleBookFor('admin')} className={`${bookFor === "admin" ? "bg-primary" : ""}`}>
-                    <p className={`${bookFor === "admin" ? "text-white" : ""}`}>
-                        Book As Admin
-                    </p>
-                </BoxContainer>
+               {
+                !(user?.role == "pcs") &&  <BoxContainer onClick={() => handleBookFor('admin')} className={`${bookFor === "admin" ? "bg-primary" : ""}`}>
+                <p className={`${bookFor === "admin" ? "text-white" : ""}`}>
+                    Book As Admin
+                </p>
+            </BoxContainer>
+               }
             </div>
             {bookFor === "teacher" && <div className='w-100 my-2 px-2'>
                 {isLoading ? <Spin />
@@ -513,7 +515,7 @@ const Slot = ({ setDatePickerOpen }) => {
                         {allTeachers?.map(teacher => {
                             let formatted = `${teacher?.name} ${teacher?.lastname} (${teacher.email})`
                             return (
-                                <option value={teacher?.email}>{formatted}</option>
+                                <option value={teacher?.email} className='p-3'>{formatted}</option>
                             )
                         })}
                     </select>

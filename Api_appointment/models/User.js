@@ -21,7 +21,7 @@ const UserSchema = mongoose.Schema({
     access_token: {type: String},
     id_token: {type: String},
     expiry_date: {type: Date},
-    resetToken: {type: String}
+    resetToken: {type: String},
 }, { timestamps: true });
 
 //midlleware before saving
