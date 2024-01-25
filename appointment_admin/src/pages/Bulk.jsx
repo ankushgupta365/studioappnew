@@ -10,6 +10,7 @@ import Papa from "papaparse";
 import Swal from "sweetalert2";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import BulkCSVTemplate from "../assets/bulkbookstudiotemplate.csv";
 dayjs.extend(customParseFormat);
 const nanoid = customAlphabet("1234567890abcdef", 10);
 
@@ -21,7 +22,6 @@ const Container = styled.div`
 `;
 const InnerContainer = styled.div`
   display: flex;
-  
 `;
 const H3 = styled.h2`
   margin-top: 40px;
@@ -41,7 +41,7 @@ const Span = styled.span`
   margin-top: 20px;
 `;
 const RealValidDataOl = [
-  "SNo",
+  "Sno",
   "Studio",
   "TimingNo",
   "TeacherEmail",
@@ -54,29 +54,21 @@ const Bulk = () => {
   const [selectedfile, SetSelectedFile] = useState("");
   const [uploading, setUploading] = useState(false);
   const [isDataValid, setIsDataValid] = useState(false);
-  const [dateString, setDateString] = useState(() => {
-    let yourDate = new Date();
-    const offset = yourDate.getTimezoneOffset();
-    yourDate = new Date(yourDate.getTime() - offset * 60 * 1000);
-    const stringDate = yourDate.toISOString().split("T")[0];
-    return stringDate;
-  });
+  const [dateString, setDateString] = useState("");
   const [datePickerOpen, setDatePickerOpen] = useState(true);
-
 
   const checkDataValid = (dataArray) => {
     const isEveryValuePresent = RealValidDataOl.every((value) =>
       dataArray.includes(value)
     );
     if (isEveryValuePresent === false) {
+      setIsDataValid(false);
+      handleClear();
       Swal.fire({
         icon: "error",
         title: "Oops...",
         text: "Please upload a file which have headears with same naming convention as given below!",
       });
-      setIsDataValid(false);
-      SetSelectedFile("");
-      setUploading(false);
     } else {
       setIsDataValid(true);
     }
@@ -112,8 +104,7 @@ const Bulk = () => {
       reader.readAsDataURL(file);
       Papa.parse(e.target.files[0], {
         header: false,
-        complete: (results) => {
-          console.log(results.data[0]);
+        complete: (results) => {  
           checkDataValid(results.data[0]);
         },
       });
@@ -127,13 +118,13 @@ const Bulk = () => {
     if (selectedfile !== "") {
       const formData = new FormData();
       formData.append("uploadField", selectedfile.realFile);
-      //   formData.append('type', typeOfBulkEmail)
+        formData.append('date', dateString)
       try {
-        const res = await userRequest.post("/send/email/multiple", formData);
+        const res = await userRequest.post("/booking/bulk/excel", formData);
         if (res.data) {
           setUploading(false);
           SetSelectedFile("");
-          Swal.fire("So fast!", "Your all emails are sent!", "success");
+          Swal.fire("So fast!", "All your bookings are made!", "success");
         }
       } catch (error) {
         console.log(error.message);
@@ -178,33 +169,44 @@ const Bulk = () => {
       return true;
     }
 
-     // Get today's date
-  const today = dayjs();
+    // Get today's date
+    const today = dayjs();
 
-   // Check if the date is before today (including today)
-   if (current.isAfter(today, 'day') || current.isSame(today, 'day')) {
-    return true;
-  }
+    // Check if the date is before today (including today)
+    if (current.isAfter(today, "day") || current.isSame(today, "day")) {
+      return true;
+    }
 
     // The date is not disabled.
     return false;
   };
+  console.log(dateString)
   return (
     <OuterContainer>
       <Sidebar />
       <Container>
         <Navbar />
-          {/* <InnerContainer>
-            <div className="m-3">
-              <DatePicker
-                onChange={onChange}
-                open={datePickerOpen}
-                style={{ width: "288px", fontSize: "28px" }}
-                size="large"
-                disabledDate={disabledDate}
-              />
-            </div>
-            <Spin indicator={antIcon} spinning={uploading} size="large">
+        <InnerContainer>
+          <div className="m-3">
+            <DatePicker
+              onChange={onChange}
+              open={datePickerOpen}
+              style={{ width: "288px", fontSize: "28px" }}
+              size="large"
+              disabledDate={disabledDate}
+            />
+          </div>
+          <div className="p-4 m-2 w-25">
+            <a
+              href={BulkCSVTemplate}
+              download="TEMPLATE-PDF-document"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <button className="btn btn-link">Download .csv file template</button>
+            </a>
+          </div>
+          <Spin indicator={antIcon} spinning={uploading} size="large">
             <div className="card m-4 p-5">
               <div>
                 <form onSubmit={FileUploadSubmit}>
@@ -237,40 +239,37 @@ const Bulk = () => {
                             </p>
                           </div>
                           <div className="d-flex justify-content-around">
-                          <div className="kb-buttons-box">
-                            <button
-                              className="btn btn-danger"
-                              onClick={handleClear}
-                            >
-                              clear
-                            </button>
+                            <div className="kb-buttons-box">
+                              <button
+                                className="btn btn-danger"
+                                onClick={handleClear}
+                              >
+                                clear
+                              </button>
+                            </div>
+                            <div className="kb-buttons-box">
+                              <button
+                                type="submit"
+                                className="btn btn-primary form-submit px-5"
+                                disabled={!isDataValid || !dateString.length}
+                              >
+                                Bulk Book
+                              </button>
+                            </div>
                           </div>
-                          <div className="kb-buttons-box">
-                        <button
-                          type="submit"
-                          className="btn btn-primary form-submit px-5"
-                          disabled={!isDataValid}
-                        >
-                          Bulk Book
-                        </button>
-                      </div>
-                      </div>
+                          {!dateString.length && <span className="text-danger w-100 text-center d-block mt-2">*Please select date</span>}
                         </div>
                       ) : (
                         ""
                       )}
                     </div>
-                    {selectedfile !== "" ? (
-                      <></>
-                    ) : (
-                      ""
-                    )}
+                    {selectedfile !== "" ? <></> : ""}
                   </div>
                 </form>
               </div>
             </div>
-            </Spin>
-          </InnerContainer> */}
+          </Spin>
+        </InnerContainer>
       </Container>
     </OuterContainer>
   );

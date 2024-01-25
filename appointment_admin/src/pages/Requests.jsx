@@ -262,11 +262,7 @@ const Requests = () => {
                             <td>{booking.user_doc.role}</td>
                             <td>{booking.user_doc.email}</td>
                             <td>
-                              {!(
-                                user?.role == "recorder" ||
-                                user?.role == "manager"  || 
-                                user?.role == "pcs"
-                              ) && (
+                              {!(user?.role == "manager") && (
                                 <Button onClick={() => showModal(booking)}>
                                   <DeleteOutlined
                                     style={{

@@ -149,7 +149,7 @@ router.post("/:userId", async (req, res) => {
 router.post("/role/:userId", async(req,res)=>{
     try {
         let additionalQuery = {}
-        if(req.body.role === 'admin' || req.body.role === 'manager' || req.body.role === 'provc' || req.body.role == "recorder"){
+        if(req.body.role === 'admin' || req.body.role === 'manager' || req.body.role === 'provc' || req.body.role == "recorder" || req.body.role === "pcs"){
             additionalQuery.isAdmin = true
         }
         await User.findOneAndUpdate({_id: req.params.userId},{

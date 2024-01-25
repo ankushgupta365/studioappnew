@@ -3,7 +3,7 @@ const { verifyTokenAndAuthorization, verifyTokenAndAdmin } = require("./verifyTo
 const User = require('../models/User');
 const Slot = require('../models/Slot');
 const sendEmail = require('./email');
-const {sendTemplatedEmailSES} = require('./emailSES')
+const { sendTemplatedEmailSES } = require('./emailSES')
 const mongoose = require('mongoose');
 const { oAuth2Client } = require('../middleware/verifyGoogle');
 const { google } = require('googleapis');
@@ -11,6 +11,8 @@ const CalendarEvent = require('../models/CalendarEvent');
 const excelJs = require('exceljs');
 const { UserRefreshClient } = require('google-auth-library');
 const multer = require("multer");
+const fs = require('fs')
+const csv = require('csvtojson')
 const bookingDoneTemplateId = process.env.BOOKINGDONEEMAILTEMPLATE
 const deleteDoneTemplateId = process.env.DELETEDONEEMAILTEMPLATE
 const waitingDoneTemplateId = process.env.WAITINGDONEEMAILTEMPLATE
@@ -244,6 +246,7 @@ router.post("/", async (req, res, next) => {
   try {
     const availableSlots = await Slot.find({
       "type": req.body.type,
+      "slotNo": req.body.slotNo,
       "timingNo": req.body.timingNo,
       'slotBookingsData.date': { $ne: new Date(req.body.slotBookingData.date) },
       'active': true
@@ -258,6 +261,7 @@ router.post("/", async (req, res, next) => {
       // const randomSlotNo = getRandomSlotNumberFromType(req.body.type, req.body.timingNo)
       const availableSlotsWaiting = await Slot.find({
         "type": req.body.type,
+        "slotNo": req.body.slotNo,
         "timingNo": req.body.timingNo,
         'active': true
       })
@@ -331,7 +335,7 @@ router.post("/", async (req, res, next) => {
     );
 
 
-    if(req.body.bookingIn != 'past'){
+    if (req.body.bookingIn != 'past') {
       const dynamicTemplateData = {
         email: req.body.email,
         type: req.body.type,
@@ -1688,7 +1692,7 @@ router.post("/temp/update/booking", async (req, res) => {
 })
 
 //temp create
-router.post("/temp/create/booking", async(req,res)=>{
+router.post("/temp/create/booking", async (req, res) => {
   try {
     const updatedSlot = await Slot.findOneAndUpdate(
       {
@@ -1701,52 +1705,96 @@ router.post("/temp/create/booking", async(req,res)=>{
         },
       }, { new: true }
     );
-    res.status(201).json({msg: "done"})
+    res.status(201).json({ msg: "done" })
   } catch (error) {
-    res.status(401).json({msg: error.message})
+    res.status(401).json({ msg: error.message })
   }
 })
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-      cb(null, './public/uploads')
+    cb(null, './public/uploads')
   },
   filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now()
-      cb(null, uniqueSuffix + '-' +file.originalname)
+    const uniqueSuffix = Date.now()
+    cb(null, uniqueSuffix + '-' + file.originalname)
   }
 })
 
 const upload = multer({ storage: storage })
 
-const helperBulkBookingExcel = async(props)=>{
+const helperBulkBookingExcel = async (tempbooking, date) => {
   try {
-    
+    const user = await User.findOne({ email: tempbooking.TeacherEmail })
+    const userId = user._id
+    console.log(userId)
+    const availableSlots = await Slot.find({
+      "timingNo": tempbooking.TimingNo,
+      "studioNo": tempbooking.Studio,
+      'slotBookingsData.date': { $eq: new Date(date) }
+    })
+
+    //update the slot else, create new booking($push)
+    if (availableSlots.length > 0) {
+      await Slot.findOneAndUpdate({ "studioNo": tempbooking.Studio, "timingNo": tempbooking.TimingNo, "slotBookingsData.date": date }, {
+        "$set": {
+          "slotBookingsData.$.userEmail": tempbooking.TeacherEmail,
+          "slotBookingsData.$.user": userId,
+          "slotBookingsData.$.program": tempbooking.Course,
+          "slotBookingsData.$.semester": tempbooking.Semester,
+          "slotBookingsData.$.degree": tempbooking.Program,
+          "slotBookingsData.$.bookingByEmail": tempbooking.BookingBy
+        }
+      })
+
+    } else {
+
+      const slotBookingData = {
+        userEmail: tempbooking.TeacherEmail,
+        date: new Date(date),
+        program: tempbooking.Course,
+        semester: tempbooking.Semester,
+        degree: tempbooking.Program,
+        bookingByEmail: tempbooking.BookingBy,
+        user: userId,
+      }
+      await Slot.findOneAndUpdate(
+        {
+          "timingNo": tempbooking.TimingNo,
+          "studioNo": tempbooking.Studio,
+        },
+        {
+          $push: {
+            "slotBookingsData": slotBookingData
+          },
+        }
+      );
+    }
   } catch (error) {
-    
+    console.log(error.message)
   }
 }
 
-router.post("/bulk/excel", upload.single('uploadField'), async (req,res)=>{
+router.post("/bulk/excel", upload.single('uploadField'), async (req, res) => {
   try {
     const file = req.file
-        if (!file) {
-            throw new Error('Please upload a file')
-        }
-        const jsonArrayData = await csv().fromFile(req.file.path)
-        //main logic
-        async function createBookingForBulkInBlockingWay() {
-          for (let i = 0; i < jsonArrayData.length; i = i + 50) {
-              const tempSenders = jsonArrayData.slice(i, i+50)
-              await helperBulkBookingExcel(tempSenders, req.body.type)
-              await new Promise(resolve => setTimeout(resolve, 5000));
-          }
+    if (!file) {
+      throw new Error('Please upload a file')
+    }
+    const jsonArrayData = await csv().fromFile(req.file.path)
+    //main logic
+    async function createBookingForBulkInBlockingWay() {
+      for (let i = 0; i < jsonArrayData.length; i = i + 1) {
+        const tempbooking = jsonArrayData[i]
+        await helperBulkBookingExcel(tempbooking, req.body.date)
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
-      await createBookingForBulkInBlockingWay()
-        fs.unlink(req.file.path, (err) => {
-            if (err) throw err;
-        })
-        res.status(201).json({ msg: "All bookings done successfully" })
+    }
+    await createBookingForBulkInBlockingWay()
+    fs.unlink(req.file.path, (err) => {
+      if (err) throw err;
+    })
+    res.status(201).json({ msg: "All bookings done successfully" })
   } catch (error) {
     res.status(400).json({ msg: error.message })
   }

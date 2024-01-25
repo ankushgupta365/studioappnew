@@ -152,7 +152,7 @@ const Login = () => {
         <Container>
             {contextHolder}
             <Wrapper>
-                <Image src="https://www.cuchd.in/about/assets/images/cu-logo.png" />
+                <Image src="https://res.cloudinary.com/dcmivyyxi/image/upload/v1705741494/file-upload/edenjka54704tjzecv16.png" />
                 <Form>
                     <Input value={email} placeholder="email" type="email" onChange={(e) => setEmail(e.target.value)} />
                     <Input value={password} placeholder="password" type="password" onChange={(e) => setPassword(e.target.value)} />

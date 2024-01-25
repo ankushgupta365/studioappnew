@@ -10,6 +10,9 @@ const createStudioRoute = require('./routes/studio')
 const programRoute = require('./routes/programRoute.js')
 const datesMapRoute = require("./routes/datesMap.js")
 const path = require('path')
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors())
 app.use("/upload", express.static(path.join(__dirname, "public/uploads")));
 
 mongoose.set('strictQuery', true);
@@ -20,8 +23,7 @@ mongoose.connect(process.env.MONGO_URL)
         }))
         .catch((err)=>{console.log(err)});
 
-app.use(cors())
-app.use(express.json());
+
 
 app.use("/api/user", userRoute)
 app.use("/api/auth", authRoute)

@@ -487,9 +487,9 @@ const Slot = ({ setDatePickerOpen }) => {
                 </Slots>
             </Spin>
         </Container>
-        {!(user?.role == "recorder" || user?.role == "manager") && showButton && !fullSlot && <Button onClick={handleBook} disable={state.posting || loading}>Book Now</Button>}
-        {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && fullSlot && showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book Full Slot</Button>}
-        {!(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs") && !showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book for Past</Button>}
+        {!(user?.role == "manager") && showButton && !fullSlot && <Button onClick={handleBook} disable={state.posting || loading}>Book Now</Button>}
+        {!(user?.role == "manager" || user?.role == "pcs" || user?.role == "recorder") && fullSlot && showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book Full Slot</Button>}
+        {!( user?.role == "manager") && !showButton && <Button onClick={handleBook} disable={state.posting || loading}>Book for Past</Button>}
         <Modal title='Select Type' open={isModalOpenType} onOk={handleOkType} onCancel={handleCancelType} okButtonProps={{
             disabled: bookFor == "" ? true : (bookFor == "teacher" && selectedTeacher === null ? true : (bookFor == "admin" ? false : false))
         }}>

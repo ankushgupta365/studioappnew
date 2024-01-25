@@ -131,7 +131,7 @@ const Register = () => {
   return (
     <Container>
       <Wrapper>
-      <Image src="https://www.cuchd.in/about/assets/images/cu-logo.png" />
+      <Image src="https://res.cloudinary.com/dcmivyyxi/image/upload/v1705741494/file-upload/edenjka54704tjzecv16.png" />
         <Title>CREATE AN ACCOUNT</Title>
         <Form>
           <Input placeholder="first name" type="name" id="name" onChange={(e) => handleChange(e)} />

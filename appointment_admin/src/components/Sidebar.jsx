@@ -47,7 +47,7 @@ const Sidebar = () => {
     <Container>
       <Logo>
         <Link to="/" style={{ textDecoration: "none" }}>
-          <Image src="https://www.cuchd.in/about/assets/images/cu-logo.png" />
+          <Image src="https://res.cloudinary.com/dcmivyyxi/image/upload/v1705741494/file-upload/edenjka54704tjzecv16.png" />
         </Link>
       </Logo>
       <Menu>
@@ -68,7 +68,6 @@ const Sidebar = () => {
             </Link>
           </ListItem>
         )}
-        {user?.role == "recorder" ? null : (
           <ListItem
             selected={location.pathname == "/requests"}
             value="/requests"
@@ -80,7 +79,6 @@ const Sidebar = () => {
               Requests
             </Link>
           </ListItem>
-        )}
         {user?.role == "recorder" ||
         user?.role == "manager" ||
         user?.role == "pcs" ? null : (
@@ -111,8 +109,6 @@ const Sidebar = () => {
             </Link>
           </ListItem>
         )}
-
-        {user?.role == "recorder" ? null : (
           <ListItem
             selected={location.pathname == "/manage"}
             value="/manage"
@@ -125,11 +121,7 @@ const Sidebar = () => {
               Manage
             </Link>
           </ListItem>
-        )}
-
-        {user?.role == "recorder" ||
-        user?.role == "manager" ||
-        user?.role == "pcs" ? null : (
+        { user?.role == "manager"  ? null : (
           <ListItem
             selected={location.pathname == "/cancelled"}
             value="/cancelled"

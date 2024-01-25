@@ -396,7 +396,6 @@ const Manage = () => {
                                   <td>{booking.user_doc.email}</td>
                                   <td>
                                     {!(
-                                      user?.role == "recorder" ||
                                       user?.role == "manager" ||
                                       user?.role == "pcs"
                                     ) && (
@@ -419,7 +418,6 @@ const Manage = () => {
                                       </Tooltip>
                                     )}
                                     {!(
-                                      user?.role == "recorder" ||
                                       user?.role == "manager" ||
                                       user?.role == "pcs"
                                     ) && (

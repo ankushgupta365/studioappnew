@@ -35,7 +35,7 @@ function App() {
         <Route path="/requests" element={user?.isAdmin ?<Requests />: <Navigate to="/login"/>} />
         <Route path="/programs" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Programs/>): <Navigate to="/login"/>} />
         <Route path="/configure" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <StudioConfigure/>): <Navigate to="/login"/>} />
-        <Route path="/cancelled" element={user?.isAdmin ?(user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Cancelled/>): <Navigate to="/login"/>} />
+        <Route path="/cancelled" element={user?.isAdmin ?(user?.role == "manager" ? <Navigate to="/"/>: <Cancelled/>): <Navigate to="/login"/>} />
         <Route path="/waiting" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Waiting/>): <Navigate to="/login"/>}/>
         <Route path="/holidays" element={user?.isAdmin? (user?.role == "recorder" || user?.role == "manager" || user?.role == "pcs"? <Navigate to="/"/>: <Holidays/>): <Navigate to="/login"/>}/>
         <Route path="/manage" element={user?.isAdmin ? <Manage/>: <Navigate to="/login"/>} />
