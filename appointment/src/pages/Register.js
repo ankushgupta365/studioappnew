@@ -16,7 +16,7 @@ const Container = styled.div`
     justify-content: center;
 `
 const Wrapper = styled.div`
-   width: 25%;
+   /* width: 25%; */
     background-color: white;
     padding: 20px;
     border-radius: 8px;
@@ -35,7 +35,7 @@ const Form = styled.form`
 `
 const Input = styled.input`
     flex: 1;
-    min-width: 40%;
+    max-width: 40%;
     padding: 10px;
     margin: 20px 10px 0px 0px;
 `
@@ -44,7 +44,7 @@ const Agreement = styled.span`
     margin: 10px 0px;
 `
 const Button = styled.button`
-    /* width: 40%;   */
+    max-width: 40%;  
     border: none;
     background-color: #1F51FF;
     color: white;
@@ -133,7 +133,7 @@ const Register = () => {
       <Wrapper>
       <Image src="https://res.cloudinary.com/dcmivyyxi/image/upload/v1705741494/file-upload/edenjka54704tjzecv16.png" />
         <Title>CREATE AN ACCOUNT</Title>
-        <Form>
+        <Form className="d-flex flex-column">
           <Input placeholder="first name" type="name" id="name" onChange={(e) => handleChange(e)} />
           <Input placeholder="last name" type="lastname" id="lastname" onChange={(e) => handleChange(e)} />
           <Input placeholder="email" type="email" id="email" onChange={(e) => handleChange(e)} required pattern="/^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/" />

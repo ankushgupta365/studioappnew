@@ -41,7 +41,7 @@ const TableContainer = styled.div`
     
 `
 const TableAndPage = styled.div`
-
+    max-height: 65vh;
 `
 const TableJi = styled.div`
     height: 65vh;
@@ -95,7 +95,7 @@ const Cancelled = () => {
     async function getBookings(page, studioNumber, selectedField, searchText) {
         setLoading(true)
         try {
-            const res = await userRequest.get(`/booking/cancelled/history/admin?page=${page}&limit=10&studio=${studioNumber}&${selectedField}=${searchText}`)
+            const res = await userRequest.get(`/booking/cancelled/history/admin?page=${page}&limit=20&studio=${studioNumber}&${selectedField}=${searchText}`)
             setLoading(false)
             return res
         } catch (error) {

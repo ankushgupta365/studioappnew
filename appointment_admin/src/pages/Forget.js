@@ -4,7 +4,7 @@ import styled from "styled-components"
 import { publicRequest } from "../requestMethods"
 
 const Container = styled.div`
-    width: 100vw;
+    width: 100vw; 
     height: 100vh;
     background: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url("https://images.news18.com/ibnlive/uploads/2022/01/untitled-design-1-1-164371082616x9.jpg") center;
     background-size: cover;
@@ -13,7 +13,7 @@ const Container = styled.div`
     justify-content: center;
 `
 const Wrapper = styled.div`
-   width: 40%;
+   /* width: auto; */
     background-color: white;
     padding: 20px;
     border-radius: 8px;
@@ -29,7 +29,7 @@ const Form = styled.form`
 `
 const Input = styled.input`
     flex: 1;
-    min-width: 40%;
+    max-width: 40%;
     padding: 10px;
     margin: 20px 10px 0px 0px;
 `
@@ -83,7 +83,7 @@ const Forget = () => {
     <Container>
       <Wrapper>
         <Title>Forget Password</Title>
-        <Form>
+        <Form className="d-flex flex-column">
           <Input placeholder="registered email" type="email" id="email" value={email} onChange={(e)=>handleChange(e)}/>
           <Agreement>
             You will get the password reset link on your email, if you already have a registered account

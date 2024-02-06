@@ -73,7 +73,7 @@ const Requests = () => {
       setLoading(true);
       setBookings([]);
       const res = await userRequest.post(
-        `/booking/find?page=${page}&limit=10`,
+        `/booking/find?page=${page}&limit=20`,
         {
           dateString: todayDateStringToSendToBackend(),
         }
@@ -205,7 +205,7 @@ const Requests = () => {
           {bookings && bookings.length > 0 ? (
             <MainContent>
               <div
-                style={{ maxHeightheight: "65vh" }}
+                style={{ maxHeight: "65vh" }}
                 className="table-responsive d-flex m-auto mt-4"
               >
                 <table className="table text-center table-striped table-hover table-bordered">

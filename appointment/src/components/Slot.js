@@ -270,7 +270,7 @@ const Slot = ({ setDatePickerOpen }) => {
                 </Slots>
             </Spin>
         </Container>
-        {showButton == true ? <Button onClick={handleBook} disableJi={state.posting || loading || (activeId == null)}>Book Now</Button> : <span className='text-danger p-2'>*Invalid time*</span>}
+        {showButton == true ? <Button onClick={()=>alert("No longer available, Contact your PC for all bookings")} disableJi={state.posting || loading || (activeId == null) || true} >Book Now (Contact your PC)</Button> : <span className='text-danger p-2'>*Invalid time*</span>}
         <Modal title={`You are booking ${activeId} slot`} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okButtonProps={{ disabled: program === '' ? true : false }}>
             <Title>Select the program</Title>
             <Form>

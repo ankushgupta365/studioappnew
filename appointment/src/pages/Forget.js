@@ -13,7 +13,7 @@ const Container = styled.div`
     justify-content: center;
 `
 const Wrapper = styled.div`
-   width: 40%;
+   /* width: 40%; */
     background-color: white;
     padding: 20px;
     border-radius: 8px;
@@ -83,7 +83,7 @@ const Forget = () => {
     <Container>
       <Wrapper>
         <Title>Forget Password</Title>
-        <Form>
+        <Form className="d-flex flex-column">
           <Input placeholder="registered email" type="email" id="email" value={email} onChange={(e)=>handleChange(e)}/>
           <Agreement>
             You will get the password reset link on your email, if you already have a registered account

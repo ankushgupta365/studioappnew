@@ -50,7 +50,9 @@ const UpperContainer = styled.div`
 `;
 const RadioContainer = styled.div``;
 const TableContainer = styled.div``;
-const TableAndPage = styled.div``;
+const TableAndPage = styled.div`
+  max-height: 65vh;
+`;
 const TableJi = styled.div`
   height: 65vh;
 `;
@@ -107,7 +109,7 @@ const Manage = () => {
     setLoading(true);
     try {
       const res = await userRequest.post(
-        `/booking/find?page=${page}&limit=10&manage=true&studio=${studioNumber}&${selectedField}=${searchText}`,
+        `/booking/find?page=${page}&limit=20&manage=true&studio=${studioNumber}&${selectedField}=${searchText}`,
         {
           dateString: todayDateStringToSendToBackend(),
         }

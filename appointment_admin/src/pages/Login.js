@@ -17,7 +17,7 @@ const Container = styled.div`
     justify-content: center;
 `
 const Wrapper = styled.div`
-   width: 25%;
+   /* width: 25%; */
     background-color: white;
     padding: 20px;
     border-radius: 8px;

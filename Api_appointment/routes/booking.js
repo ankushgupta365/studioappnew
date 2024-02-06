@@ -1284,7 +1284,7 @@ router.post("/history", async (req, res) => {
 router.post("/find", async (req, res) => {
   // pagination and limit
   const page = Number(req.query.page) || 1
-  const limit = Number(req.query.limit) || 10  //by default 10 is the limit of objects to fetch
+  const limit = Number(req.query.limit) || 20  //by default 10 is the limit of objects to fetch
   const skip = (page - 1) * limit       // if limit is 10 and page is 2 then, skip will be 10, so it will show the objects after skipping 10 objects from the results
 
   const sort = req.query.sort

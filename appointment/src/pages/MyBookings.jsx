@@ -249,7 +249,7 @@ const MyBookings = () => {
                                                         {bookingsType == 'waiting' ? <td>{booking.bookings?.waitingNo}</td> : null}
                                                         <td>{booking.bookings?.program}</td>
                                                         <td>{`${localDateStringToDDMMYYYY(booking?.bookings?.bookedAt)} ${new Date(booking?.bookings?.bookedAt).toLocaleTimeString()}`}</td>
-                                                        {bookingsType == 'waiting' ? <td>{bookingsType == "waiting" ? <Button onClick={() => showModal(booking)}><DeleteOutlined style={{ color: "red", fontSize: "18px", margin: "2px" }} /></Button> : null}</td> : null}
+                                                        {bookingsType == 'waiting' ? <td>{bookingsType == "waiting" ? <Button onClick={() => alert("Contact your PC for cancellation")}><DeleteOutlined style={{ color: "red", fontSize: "18px", margin: "2px" }} /></Button> : null}</td> : null}
                                                         {bookingsType == 'cancelled' ? <td>{`${localDateStringToDDMMYYYY(booking.bookings?.deletedAt)} ${new Date(booking?.bookings?.deletedAt).toLocaleTimeString()}`}</td> : null}
                                                     </tr>
                                                 )
