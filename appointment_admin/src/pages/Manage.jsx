@@ -363,7 +363,7 @@ const Manage = () => {
                                       : null
                                   }
                                 >
-                                  <td>{index + 1 + 10 * (currentPage - 1)}</td>
+                                  <td>{index + 1 + 20 * (currentPage - 1)}</td>
                                   <td>
                                     {getTimingStringFromTimingNoOfSlot(
                                       booking?.timingNo

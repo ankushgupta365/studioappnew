@@ -230,7 +230,7 @@ const Cancelled = () => {
                                             bookings?.map((booking,index) => {
                                                 return (                                              
                                                         <tr key={booking?.bookings?._id} className={new Date(booking?.bookings?.date).getTime() == new Date(todayDateStringToSendToBackend()).getTime()? "table-danger": ""}>
-                                                            <td>{index+1 + (10*(currentPage-1))}</td>
+                                                            <td>{index+1 + (20*(currentPage-1))}</td>
                                                             <td>{getTimingStringFromTimingNoOfSlot(booking?.timingNo)}</td>
                                                             <td>{booking?.studioNo}</td>
                                                             <td>{Math.trunc(booking?.slotNo % 10)}</td>
