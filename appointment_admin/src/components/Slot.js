@@ -162,6 +162,7 @@ const Slot = ({ setDatePickerOpen }) => {
     const [allTeachers, setAllTeachers] = useState([]); // all teachers array
     const [isLoading, setIsLoading] = useState(false); // loading spinner
     const [selectedTeacher, setSelectedTeacher] = useState(null); // selected teacher
+    const [Url, setUrl] = useState("")
     const header = {
         'Content-Type': 'application/json',
         'token': `Bearer ${user?.accestoken}`
@@ -299,7 +300,8 @@ const Slot = ({ setDatePickerOpen }) => {
                     degree: programName,
                     date: dateString,
                     userEmail: selectedTeacher?.email,
-                    bookingByEmail: user?.email
+                    bookingByEmail: user?.email,
+                    driveUrl: Url
                 },
                 programObject: programObjectSelected,
                 bookingFrom: "admin",
@@ -522,7 +524,7 @@ const Slot = ({ setDatePickerOpen }) => {
                 }
             </div>}
         </Modal>
-        <Modal title={`You are booking slot for teacher`} open={isModalOpenYetAnother} onOk={handleOkYetAnother} onCancel={handleCancelYetAnother} okButtonProps={{ disabled: program === '' ? true : false }}>
+        <Modal title={`You are booking slot for teacher`} open={isModalOpenYetAnother} onOk={handleOkYetAnother} onCancel={handleCancelYetAnother} okButtonProps={{ disabled: program === '' || Url === "" ? true : false }}>
             <Title>Select the program</Title>
             <Form>
                 {/* <Input placeholder="eg: MBA" onChange={(e) => setProgram(e.target.value)} /> */}
@@ -553,6 +555,12 @@ const Slot = ({ setDatePickerOpen }) => {
                 {program === '' ? <div style={{ marginLeft: '10px' }}>
                     <span style={{ color: 'red' }}>*Please select a program*</span>
                 </div> : ''}
+                <div>
+                    <label>
+                        URL of File<span className='text-danger'>*</span>
+                    </label>
+                    <input type='text' className='p-1' value={Url} onChange={(e)=>{setUrl(e.target.value)}}/>
+                </div>
             </Form>
         </Modal>
         <Modal title={`You are booking slot ${activeId % 10} of studio ${Math.floor(activeId / 10)} for admin`} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okButtonProps={{ disabled: program === "" ? true : false }}>
